@@ -34,11 +34,6 @@ import { randomUUID } from 'crypto';
 import { maskPhone } from '../../utils/maskPhoneHelper';
 import { successResponseHelper } from '../../utils/successResponseHelper';
 
-const managerLogs = logger.child({
-  service: 'createManagerService',
-  requestId: randomUUID(),
-});
-
 const CreateManagerService = async (newManagerData: NewManagerData) => {
   const now = new Date();
   const isDev = process.env.NODE_ENV === 'development';

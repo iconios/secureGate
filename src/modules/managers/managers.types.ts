@@ -97,3 +97,10 @@ export const verifyManagerDataSchema = NewManagerDataSchema.pick({
 });
 
 export type VerifyManagerData = z.infer<typeof verifyManagerDataSchema>;
+
+export const loginManagerDataSchema = NewManagerDataSchema.pick({
+  email: true,
+  password: true,
+}).strict();
+
+export type LoginManagerData = z.infer<typeof loginManagerDataSchema>;

@@ -75,14 +75,14 @@ export const emailVerificationRequestsSchema = z.object({
   created_at: z.iso.datetime(),
   email: z.email(),
   purpose: z.enum(['account_registration', 'password_reset', 'verification_resend']),
-  token_hash: z.string(),
+  code_hash: z.string(),
   status: z.enum(['pending', 'used', 'expired', 'revoked']),
   sent_count: z.number().default(0),
   last_sent_at: z.iso.datetime().nullable(),
   next_allowed_at: z.iso.datetime().nullable(),
   window_started_at: z.iso.datetime(),
   window_expires_at: z.iso.datetime(),
-  token_expires_at: z.iso.datetime(),
+  code_expires_at: z.iso.datetime(),
   used_at: z.iso.datetime().nullable(),
   ip_address: z.string().nullable(),
   user_agent: z.string().nullable(),
@@ -93,7 +93,9 @@ export type EmailVerificationRequest = z.infer<typeof emailVerificationRequestsS
 export const verifyManagerDataSchema = NewManagerDataSchema.pick({
   email: true,
 }).extend({
-  token: z.string().min(1, 'Token is required'),
+  code: z.string()
+    .min(6, 'Verification code must be at least 6 characters long')
+    .max(6, 'Verification code must be exactly 6 characters long'),
 });
 
 export type VerifyManagerData = z.infer<typeof verifyManagerDataSchema>;

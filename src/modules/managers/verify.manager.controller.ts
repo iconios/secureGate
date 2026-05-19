@@ -1,7 +1,7 @@
 // Verify Manager Controller
 /*
 Plan:
-1. Accept and validate the verification request (e.g., email, token).
+1. Accept and validate the verification request (e.g., email, code).
 2. Pass the validated data to the VerifyManagerService
 3. Send the response back to the client
 */
@@ -19,23 +19,23 @@ const VerifyManagerController = async (req: Request, res: Response) => {
   });
 
   try {
-    // 1. Accept and validate the verification request (e.g., email, token).
-    const { email, token } = req.body;
+    // 1. Accept and validate the verification request (e.g., email, code).
+    const { email, code } = req.body;
 
-    if (!email || !token) {
+    if (!email || !code) {
       return res
         .status(400)
         .json(
           errorResponseHelper(
-            'Email and token are required',
+            'Email and code are required',
             'MISSING_FIELDS',
-            'Email and token must be provided',
+            'Email and code must be provided',
           ),
         );
     }
 
     // 2. Pass the validated data to the VerifyManagerService
-    const result = await VerifyManagerService({ email, token });
+    const result = await VerifyManagerService({ email, code });
 
     // 3. Send the response back to the client
     if (!result?.success) {

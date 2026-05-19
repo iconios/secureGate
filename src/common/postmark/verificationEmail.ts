@@ -1,7 +1,6 @@
 import { transporter } from './mailer';
 
-const sendVerificationEmail = async (email: string, token: string, fullName: string) => {
-  const verificationUrl = `${process.env.BASE_URL}/manager-auth/verify-email?token=${token}`;
+const sendVerificationEmail = async (email: string, code: string, fullName: string) => {
   const fromAddress = `"${process.env.APP_NAME}" <${process.env.MAIL_FROM}>`;
   const mailOptions = {
     From: fromAddress,
@@ -9,17 +8,16 @@ const sendVerificationEmail = async (email: string, token: string, fullName: str
     Subject: 'Verify your Email',
     MessageStream: 'outbound',
     HtmlBody: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Email Verification</h2>
+        <h2>Email Verification Code</h2>
         <p>Hello ${fullName},</p>
-        <p>Thank you for registering with SecureGate! Please click the button below to verify your email address:</p>
-        <a href="${verificationUrl}" 
-           style="display: inline-block; padding: 12px 24px; background-color: #007bff; 
-                  color: white; text-decoration: none; border-radius: 4px; margin: 20px 0;">
-          Verify Email
-        </a>
-        <p>Or copy and paste this link in your browser:</p>
-        <p>${verificationUrl}</p>
-        <p>This link will expire in 24 hours.</p>
+        <p>Thank you for registering with SecureGate! Please Use this verification code to complete email verification in the app:</p>
+        <h1 style="font-size: 24px; color: #333;">${code}</h1>
+        
+        <p>This link will expire in 30 minutes.</p>
+
+        <p>If you did not request this verification, please ignore this email.</p>
+
+        <p>Best regards,<br/>The SecureGate Team</p>
       </div>`,
   };
 

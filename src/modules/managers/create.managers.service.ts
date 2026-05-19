@@ -15,7 +15,7 @@ Plan:
     Log every attempt and outcome
     return generic success response
 4. Create new manager account
-5. Generate and store hashed verification token with expiry in database.
+5. Generate and store hashed verification code with expiry in database.
 6. Send verification email
 7. Log the outcome
 8. Return generic success response
@@ -27,17 +27,17 @@ import sendVerificationEmail from '../../common/postmark/verificationEmail';
 import { supabaseAdmin } from '../../common/supabase/supabase';
 import { errorResponseHelper } from '../../utils/errorResponseHelper';
 import { hashString } from '../../utils/hashHelper';
-import { tokenGenHelper } from '../../utils/tokenGenHelper';
 import { NewManagerData, NewManagerDataSchema } from './managers.types';
 import logger from '../../common/winston/logger';
 import { randomUUID } from 'crypto';
 import { maskPhone } from '../../utils/maskPhoneHelper';
 import { successResponseHelper } from '../../utils/successResponseHelper';
+import { generateUniqueCode } from '../../utils/codeGenHelper';
 
 const CreateManagerService = async (newManagerData: NewManagerData) => {
   const now = new Date();
   const isDev = process.env.NODE_ENV === 'development';
-  const { cooldownMinutes, windowMinutes, maxSendsPerWindow, tokenExpiryMinutes } =
+  const { cooldownMinutes, windowMinutes, maxSendsPerWindow, codeExpiryMinutes } =
     userAccountSettings();
 
   const managerLogs = logger.child({
@@ -171,14 +171,14 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
 
       // resend verification email if window allows and max sends not reached.
       if (recentRequests?.window_expires_at && recentRequests.window_expires_at < now) {
-        const rawToken = tokenGenHelper();
-        const newHashedToken = await hashString(rawToken);
+        const rawCode = generateUniqueCode();
+        const newHashedCode = await hashString(rawCode);
         await supabaseAdmin
           .from('email_verification_requests')
           .update({
             sent_count: 1,
-            token_hash: newHashedToken,
-            token_expires_at: new Date(now.getTime() + tokenExpiryMinutes * 60 * 1000),
+            code_hash: newHashedCode,
+            code_expires_at: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000),
             next_allowed_at: new Date(now.getTime() + cooldownMinutes * 60 * 1000),
             window_started_at: now,
             window_expires_at: new Date(now.getTime() + windowMinutes * 60 * 1000),
@@ -186,7 +186,10 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
           })
           .eq('id', recentRequests.id);
 
-        await sendVerificationEmail(email, rawToken, full_name);
+        if (isDev) {
+          console.log('Generated raw code for resending verification email:', rawCode); // Debug log to verify code generation
+        }
+        await sendVerificationEmail(email, rawCode, full_name);
 
         managerLogs.info(`Resent verification email during new window for email: ${email}`, {
           full_name,
@@ -194,7 +197,7 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
           sent_count: 1,
         });
         return successResponseHelper(
-          'A new verification email has been sent. Please check your inbox.',
+          'A new verification code has been sent your email. Please check your inbox.',
         );
       }
 
@@ -206,20 +209,19 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
         (!nextAllowedAt || nextAllowedAt <= now) &&
         recentRequests.sent_count < maxSendsPerWindow
       ) {
-        const rawToken = tokenGenHelper();
-        const tokenHash = await hashString(rawToken);
+        const rawCode = generateUniqueCode();
+        const codeHash = await hashString(rawCode);
 
         const { error: updateError } = await supabaseAdmin
           .from('email_verification_requests')
           .update({
             sent_count: recentRequests.sent_count + 1,
-            token_hash: tokenHash,
-            token_expires_at: new Date(
-              now.getTime() + tokenExpiryMinutes * 60 * 1000,
+            code_hash: codeHash,
+            code_expires_at: new Date(
+              now.getTime() + codeExpiryMinutes * 60 * 1000,
             ).toISOString(),
             next_allowed_at: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
             status: 'pending',
-            updated_at: now.toISOString(),
           })
           .eq('id', recentRequests.id);
 
@@ -232,25 +234,28 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
           );
         }
 
-        await sendVerificationEmail(email, rawToken, full_name);
+        if (isDev) {
+          console.log('Generated raw code for resending verification email:', rawCode); // Debug log to verify code generation
+        }
+        await sendVerificationEmail(email, rawCode, full_name);
 
         return successResponseHelper(
-          'A verification email has been sent. Please check your inbox.',
+          'A verification code has been sent to your email. Please check your inbox.',
         );
       }
 
       // resend verification email if no email-based rate record exists.
       if (!recentRequests) {
-        const rawToken = tokenGenHelper();
-        const newHashedToken = await hashString(rawToken);
+        const rawCode = generateUniqueCode();
+        const newHashedCode = await hashString(rawCode);
         const { error: insertRequestError } = await supabaseAdmin
           .from('email_verification_requests')
           .insert({
             email,
             purpose: 'account_registration',
-            token_hash: newHashedToken,
+            code_hash: newHashedCode,
             sent_count: 1,
-            token_expires_at: new Date(now.getTime() + tokenExpiryMinutes * 60 * 1000),
+            code_expires_at: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000),
             next_allowed_at: new Date(now.getTime() + cooldownMinutes * 60 * 1000),
             window_started_at: now,
             window_expires_at: new Date(now.getTime() + windowMinutes * 60 * 1000),
@@ -275,7 +280,10 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
           );
         }
 
-        await sendVerificationEmail(email, rawToken, full_name);
+        if (isDev) {
+          console.log('Generated raw code for new manager:', rawCode); // Debug log to verify code generation
+        }
+        await sendVerificationEmail(email, rawCode, full_name);
 
         managerLogs.info(
           `Sent first verification email for unverified existing manager with email: ${email}`,
@@ -286,7 +294,7 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
           },
         );
         return successResponseHelper(
-          'A verification email has been sent. Please check your inbox.',
+          'A verification code has been sent to your email. Please check your inbox.',
         );
       }
     }
@@ -318,16 +326,17 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
       );
     }
 
-    // 5. Generate and store hashed verification token with expiry.
-    const tokenHash = await hashString(tokenGenHelper());
-    const tokenExpiry = new Date(now.getTime() + tokenExpiryMinutes * 60 * 1000);
-    const { error: tokenInsertError } = await supabaseAdmin
+    // 5. Generate and store hashed verification code with expiry.
+    const rawCode = generateUniqueCode();
+    const codeHash = await hashString(rawCode);
+    const codeExpiry = new Date(now.getTime() + codeExpiryMinutes * 60 * 1000);
+    const { error: codeInsertError } = await supabaseAdmin
       .from('email_verification_requests')
       .insert({
         email,
         purpose: 'account_registration',
-        token_hash: tokenHash,
-        token_expires_at: tokenExpiry,
+        code_hash: codeHash,
+        code_expires_at: codeExpiry,
         status: 'pending',
         sent_count: 1,
         next_allowed_at: new Date(now.getTime() + cooldownMinutes * 60 * 1000),
@@ -337,11 +346,11 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
       .select('id')
       .single();
 
-    if (tokenInsertError) {
-      managerLogs.error(`Database error while creating verification token for email: ${email}`, {
+    if (codeInsertError) {
+      managerLogs.error(`Database error while creating verification code for email: ${email}`, {
         full_name,
         phone: maskPhone(phone),
-        error: tokenInsertError,
+        error: codeInsertError,
       });
 
       const { error: deleteManagerError } = await supabaseAdmin
@@ -361,8 +370,8 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
       return errorResponseHelper(
         'Database error',
         'DATABASE_ERROR',
-        'Error inserting verification token into database',
-        tokenInsertError,
+        'Error inserting verification code into database',
+        codeInsertError,
       );
     }
 
@@ -371,7 +380,10 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
       full_name,
       phone: maskPhone(phone),
     });
-    await sendVerificationEmail(email, tokenHash, full_name);
+    if (isDev) {
+      console.log('Generated raw code for new manager:', rawCode); // Debug log to verify code generation
+    }
+    await sendVerificationEmail(email, rawCode, full_name);
 
     // 7. Return generic success response
     return successResponseHelper(

@@ -17,6 +17,7 @@ import { LoginManagerData, loginManagerDataSchema } from './managers.types';
 import jwt from 'jsonwebtoken';
 import logger from '../../common/winston/logger';
 import { ZodError } from 'zod';
+import { redactEmailUsername } from '../../utils/redactEmailUsername';
 
 const LoginManagerService = async (loginData: LoginManagerData) => {
   const isDev = process.env.NODE_ENV === 'development';
@@ -38,7 +39,11 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
       .maybeSingle();
 
     if (error || !manager) {
-      managerLogs.error('Invalid email or password', { email, error: error ?? null });
+      managerLogs.error('Invalid email or password', {
+        email: redactEmailUsername(email),
+        error: error ?? null,
+      });
+
       return errorResponseHelper(
         'Invalid email or password',
         'INVALID_CREDENTIALS',
@@ -49,7 +54,11 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
     // 3. Verify the password
     const isPasswordValid = await compareString(password, manager.password_hash);
     if (!isPasswordValid) {
-      managerLogs.error('Invalid email or password', { email, error: error ?? null });
+      managerLogs.error('Invalid email or password', {
+        email: redactEmailUsername(email),
+        error: error ?? null,
+      });
+
       return errorResponseHelper(
         'Invalid email or password',
         'INVALID_CREDENTIALS',
@@ -81,6 +90,11 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
     managerLogs.error('Error occurred while logging in manager', { error });
 
     if (error instanceof ZodError) {
+      managerLogs.error('Validation error in login data', {
+        error: error.message,
+        cause: error.cause,
+      });
+
       return errorResponseHelper(
         'Invalid input data',
         'BAD_REQUEST',

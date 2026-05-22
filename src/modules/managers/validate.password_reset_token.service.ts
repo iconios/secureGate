@@ -131,7 +131,7 @@ const ValidateManagerPasswordResetTokenService = async (validateTokenData: Valid
 
     return errorResponseHelper(
       'An error occurred while validating the token',
-      'VALIDATION_ERROR',
+      'INTERNAL_SERVER_ERROR',
       'Failed to validate the provided token.',
       error,
     );

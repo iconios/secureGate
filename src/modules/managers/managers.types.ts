@@ -131,7 +131,7 @@ export type ForgotPasswordData = z.infer<typeof ForgotPasswordDataSchema>;
 
 export const PasswordUpdateDataSchema = z
   .object({
-    email: z.email(),
+    request_id: z.uuid(),
     password: PasswordSchema,
     token: z.string().trim().min(10),
   })

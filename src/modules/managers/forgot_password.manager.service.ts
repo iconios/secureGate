@@ -181,7 +181,7 @@ const ForgotPasswordManagerService = async (email: ForgotPasswordData) => {
       managerLogs.info(
         `Updated existing password reset request and sent email for: ${redactEmailUsername(userEmail)}`,
       );
-      await sendPasswordResetEmail(userEmail, newResetCode, user.full_name);
+      await sendPasswordResetEmail(userEmail, newResetCode, user.full_name, existingRequest.id);
 
       // Step 7. Return a success response indicating that the password reset code has been sent
       managerLogs.info(
@@ -194,7 +194,7 @@ const ForgotPasswordManagerService = async (email: ForgotPasswordData) => {
         },
       );
     } else {
-      const { error: insertError } = await supabaseAdmin
+      const { data: insertData, error: insertError } = await supabaseAdmin
         .from('email_verification_requests')
         .insert({
           email: userEmail,
@@ -206,7 +206,9 @@ const ForgotPasswordManagerService = async (email: ForgotPasswordData) => {
           window_started_at: now.toISOString(),
           window_expires_at: new Date(now.getTime() + windowMinutes * 60 * 1000).toISOString(),
           code_expires_at: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000).toISOString(),
-        });
+        })
+        .select('id')
+        .single();
 
       if (insertError) {
         managerLogs.error(
@@ -227,7 +229,7 @@ const ForgotPasswordManagerService = async (email: ForgotPasswordData) => {
       managerLogs.info(
         `Created new password reset request and sent email for email: ${redactEmailUsername(userEmail)}`,
       );
-      await sendPasswordResetEmail(userEmail, newResetCode, user.full_name);
+      await sendPasswordResetEmail(userEmail, newResetCode, user.full_name, insertData.id);
 
       // Step 7. Return a success response indicating that the password reset code has been sent
       managerLogs.info(

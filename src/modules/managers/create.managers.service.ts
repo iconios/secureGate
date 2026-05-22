@@ -217,9 +217,7 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
           .update({
             sent_count: recentRequests.sent_count + 1,
             code_hash: codeHash,
-            code_expires_at: new Date(
-              now.getTime() + codeExpiryMinutes * 60 * 1000,
-            ).toISOString(),
+            code_expires_at: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000).toISOString(),
             next_allowed_at: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
             status: 'pending',
           })

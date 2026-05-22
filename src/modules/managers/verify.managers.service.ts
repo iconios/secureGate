@@ -30,8 +30,8 @@ const VerifyManagerService = async (verifyManagerData: VerifyManagerData) => {
   try {
     // 1. Accept and validate the verification request (e.g., email, code).
     const { email, code } = verifyManagerDataSchema.parse(verifyManagerData);
-    managerLogs.info('Processing verification request', { 
-      email: redactEmailUsername(email) 
+    managerLogs.info('Processing verification request', {
+      email: redactEmailUsername(email),
     });
     emailprocessing = email; // Assigning email to the outer scope variable for logging in catch block
 
@@ -65,8 +65,8 @@ const VerifyManagerService = async (verifyManagerData: VerifyManagerData) => {
     if (verificationRequest.code_hash) {
       const isCodeMatch = await compareString(code, verificationRequest.code_hash);
       if (isCodeMatch) {
-        managerLogs.info('Verification code validated successfully', { 
-          email: redactEmailUsername(email) 
+        managerLogs.info('Verification code validated successfully', {
+          email: redactEmailUsername(email),
         });
 
         const { data: updatedManager, error: updateManagerError } = await supabaseAdmin
@@ -119,8 +119,8 @@ const VerifyManagerService = async (verifyManagerData: VerifyManagerData) => {
 
         // 4. If invalid, send an appropriate error response (e.g., "Invalid code" or "Code expired").
       } else {
-        managerLogs.error('Invalid verification code', { 
-          email: redactEmailUsername(email) 
+        managerLogs.error('Invalid verification code', {
+          email: redactEmailUsername(email),
         });
 
         return errorResponseHelper(
@@ -142,9 +142,9 @@ const VerifyManagerService = async (verifyManagerData: VerifyManagerData) => {
     if (isDev) {
       console.error('VerifyManagerService:', error);
     }
-    managerLogs.error('Unexpected error occurred during verification', { 
+    managerLogs.error('Unexpected error occurred during verification', {
       email: redactEmailUsername(emailprocessing ?? 'unknownemail@unknown.com'),
-      error 
+      error,
     });
 
     if (error instanceof ZodError) {

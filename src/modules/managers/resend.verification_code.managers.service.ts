@@ -1,81 +1,88 @@
-// Forgot Password Manager Service
+// Resend Verification Code Manager Service
 /**
- * This service is responsible for handling the logic related to the forgot password functionality for managers. It interacts with the database to find the user and updates the password reset code as needed. It also handles sending the password reset code to the user's email.
+ * This service is responsible for handling the logic related to resending verification codes to users. It interacts with the database to find the user and updates the verification code as needed. It also handles sending the new verification code to the user's email or phone number.
  * The service includes methods for:
- * - Finding the user by their email.
- * - Generating a new password reset code.
- * - Sending the password reset code to the user's email.
+ * - Finding the user by their email or phone number.
+ * - Generating a new verification code.
+ * - Sending the new verification code to the user.
  */
 
-import { randomUUID } from 'crypto';
+import { ResendVerificationCodeData, ResendVerificationCodeDataSchema } from './managers.types';
 import { supabaseAdmin } from '../../common/supabase/supabase';
-import logger from '../../common/winston/logger';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
+import { generateUniqueCode } from '../../utils/codeGenHelper';
 import { hashString } from '../../utils/hashHelper';
-import { tokenGenHelper } from '../../utils/tokenGenHelper';
-import { ForgotPasswordData, ForgotPasswordDataSchema } from './managers.types';
-import { redactEmailUsername } from '../../utils/redactEmailUsername';
 import { userAccountSettings } from '../../common/configs';
-import sendPasswordResetEmail from '../../common/postmark/resetPasswordEmail';
+import { errorResponseHelper } from '../../utils/errorResponseHelper';
+import sendVerificationEmail from '../../common/postmark/verificationEmail';
 import { successResponseHelper } from '../../utils/successResponseHelper';
+import { randomUUID } from 'crypto';
+import logger from '../../common/winston/logger';
 import { ZodError } from 'zod';
+import { redactEmailUsername } from '../../utils/redactEmailUsername';
 
 /*
 #Plan:
 1. Accept and validate the email for the request
 2. Find the user in the database using the provided email
 3. If the user is not found, return an error response
-4. If the user is found, generate a new password reset code
-5. Update the user's record in the database with the new password reset code
-6. Send the new password reset code to the user's email
-7. Return a success response indicating that the password reset code has been sent 
+4. If the user is found, generate a new verification code
+5. Update the user's record in the database with the new verification code
+6. Send the new verification code to the user's email
+7. Return a success response indicating that the verification code has been resent
 */
 
-const ForgotPasswordManagerService = async (email: ForgotPasswordData) => {
+const ResendVerificationCodeManagerService = async (email: ResendVerificationCodeData) => {
   const now = new Date();
   const { cooldownMinutes, windowMinutes, maxSendsPerWindow, codeExpiryMinutes } =
     userAccountSettings();
 
   const managerLogs = logger.child({
-    service: 'forgotPasswordManagerService',
+    service: 'resendVerificationCodeManagerService',
     requestId: randomUUID(),
   });
 
   try {
     // Step 1: Accept and validate the email for the request
-    const { email: userEmail } = ForgotPasswordDataSchema.parse(email);
+    const { email: userEmail } = ResendVerificationCodeDataSchema.parse(email);
 
     // Step 2: Find the user in the database using the provided email
-    const { data: user, error: findError } = await supabaseAdmin
+    const { data: user, error: userError } = await supabaseAdmin
       .from('managers')
-      .select('id, email, full_name')
+      .select('id, email, full_name, is_verified')
       .eq('email', userEmail)
       .maybeSingle();
 
-    if (findError || !user) {
+    if (userError || !user) {
       // Step 3: If the user is not found, return an error response
-      managerLogs.error(`Password reset user not found for ${redactEmailUsername(userEmail)}`, {
-        error: findError ?? '',
+      managerLogs.error(`User not found with email: ${redactEmailUsername(userEmail)}`, {
+        error: userError,
       });
-
       return errorResponseHelper(
-        'If an account exists for this email, a password reset code has been sent.',
+        'User not found with the provided email.',
         'USER_NOT_FOUND',
-        'If an account exists for this email, a password reset code has been sent.',
-        findError,
+        'User not found with the provided email.',
+        {
+          error: userError ?? '',
+        },
       );
     }
 
-    // Step 4: If the user is found, generate a new password reset code
-    const newResetCode = tokenGenHelper();
-    const hashedResetCode = await hashString(newResetCode);
+    if (user.is_verified) {
+      return successResponseHelper(
+        'If this account requires verification, a verification code has been sent.',
+      );
+    }
 
-    // Step 5: Update the user's record in the database with the new password reset code
+    // Step 4: If the user is found, generate a new verification code
+    const newVerificationCode = generateUniqueCode();
+    const hashedVerificationCode = await hashString(newVerificationCode);
+
+    // Step 5: Update the user's record in the database with the new verification code
     const { data: existingRequest, error: selectError } = await supabaseAdmin
       .from('email_verification_requests')
       .select('id, sent_count, window_started_at, window_expires_at, next_allowed_at')
       .eq('email', userEmail)
-      .eq('purpose', 'password_reset')
+      .eq('purpose', 'account_registration')
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
       .limit(1)
@@ -83,16 +90,15 @@ const ForgotPasswordManagerService = async (email: ForgotPasswordData) => {
 
     if (selectError) {
       managerLogs.error(
-        `Error checking existing password request for email: ${redactEmailUsername(userEmail)}`,
+        `Error checking existing verification requests for email: ${redactEmailUsername(userEmail)}`,
         {
           error: selectError,
         },
       );
-
       return errorResponseHelper(
-        'Error checking exisiting request',
+        'Error checking existing verification requests.',
         'DATABASE_ERROR',
-        'Error checking exisiting request',
+        'Error checking existing verification requests.',
         selectError,
       );
     }
@@ -122,26 +128,8 @@ const ForgotPasswordManagerService = async (email: ForgotPasswordData) => {
         );
       }
 
-      const { error: revokeError } = await supabaseAdmin
-        .from('email_verification_requests')
-        .update({
-          status: 'revoked',
-        })
-        .neq('id', existingRequest.id)
-        .eq('status', 'pending')
-        .eq('purpose', 'password_reset')
-        .eq('email', userEmail);
-
-      if (revokeError) {
-        return errorResponseHelper(
-          'Error updating password reset request.',
-          'DATABASE_ERROR',
-          'Error updating password reset request.',
-          revokeError,
-        );
-      }
-
       const windowExpiresAt = window_expires_at ? new Date(window_expires_at) : null;
+
       const isWindowExpired = !windowExpiresAt || now >= windowExpiresAt;
       const nextSentCount = isWindowExpired ? 1 : sent_count + 1;
       const nextWindowStartedAt = isWindowExpired ? now.toISOString() : window_started_at;
@@ -152,7 +140,7 @@ const ForgotPasswordManagerService = async (email: ForgotPasswordData) => {
       const { error: updateError } = await supabaseAdmin
         .from('email_verification_requests')
         .update({
-          code_hash: hashedResetCode,
+          code_hash: hashedVerificationCode,
           sent_count: nextSentCount,
           last_sent_at: now.toISOString(),
           next_allowed_at: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
@@ -177,69 +165,62 @@ const ForgotPasswordManagerService = async (email: ForgotPasswordData) => {
         );
       }
 
-      // Step 6. Send the new password reset code to the user's email
+      // Step 6: Send the new verification code to the user's email
       managerLogs.info(
-        `Updated existing password reset request and sent email for: ${redactEmailUsername(userEmail)}`,
+        `Updated existing verification request and sent email for email: ${redactEmailUsername(userEmail)}`,
       );
-      await sendPasswordResetEmail(userEmail, newResetCode, user.full_name);
+      await sendVerificationEmail(userEmail, newVerificationCode, user.full_name);
 
-      // Step 7. Return a success response indicating that the password reset code has been sent
+      // Step 7: Return a success response indicating that the verification code has been resent
       managerLogs.info(
-        `Password reset link resent successfully to email: ${redactEmailUsername(userEmail)}`,
+        `Verification code resent successfully to email: ${redactEmailUsername(userEmail)}`,
       );
-      return successResponseHelper(
-        'If an account exists with this email, a password reset link has been sent',
-        {
-          email: userEmail,
-        },
-      );
+      return successResponseHelper('Verification code resent successfully.', { email: userEmail });
     } else {
       const { error: insertError } = await supabaseAdmin
         .from('email_verification_requests')
         .insert({
           email: userEmail,
-          code_hash: hashedResetCode,
-          purpose: 'password_reset',
+          code_hash: hashedVerificationCode,
+          purpose: 'account_registration',
           sent_count: 1,
           last_sent_at: now.toISOString(),
           next_allowed_at: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
           window_started_at: now.toISOString(),
           window_expires_at: new Date(now.getTime() + windowMinutes * 60 * 1000).toISOString(),
           code_expires_at: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000).toISOString(),
+          status: 'pending',
         });
 
       if (insertError) {
         managerLogs.error(
-          `Error creating password reset request for email: ${redactEmailUsername(userEmail)}`,
+          `Error creating verification request for email: ${redactEmailUsername(userEmail)}`,
           {
             error: insertError,
           },
         );
         return errorResponseHelper(
-          'Error creating password reset request.',
+          'Error creating verification request.',
           'DATABASE_ERROR',
-          'Error creating password reset request.',
+          'Error creating verification request.',
           insertError,
         );
       }
 
-      // Step 6. Send the new password reset code to the user's email
+      // Step 6: Send the new verification code to the user's email
       managerLogs.info(
-        `Created new password reset request and sent email for email: ${redactEmailUsername(userEmail)}`,
+        `Created new verification request and sent email for email: ${redactEmailUsername(userEmail)}`,
       );
-      await sendPasswordResetEmail(userEmail, newResetCode, user.full_name);
+      await sendVerificationEmail(userEmail, newVerificationCode, user.full_name);
 
-      // Step 7. Return a success response indicating that the password reset code has been sent
+      // Step 7: Return a success response indicating that the verification code has been resent
       managerLogs.info(
-        `Password reset link sent successfully to email: ${redactEmailUsername(userEmail)}`,
+        `Verification code sent successfully to email: ${redactEmailUsername(userEmail)}`,
       );
-      return successResponseHelper(
-        'If an account exists with this email, a password reset link has been sent',
-        { email: userEmail },
-      );
+      return successResponseHelper('Verification code sent successfully.', { email: userEmail });
     }
   } catch (error) {
-    managerLogs.error('An unexpected error occurred while resending password reset link.', {
+    managerLogs.error('An unexpected error occurred while resending verification code.', {
       email,
       error,
     });
@@ -262,4 +243,4 @@ const ForgotPasswordManagerService = async (email: ForgotPasswordData) => {
   }
 };
 
-export default ForgotPasswordManagerService;
+export default ResendVerificationCodeManagerService;

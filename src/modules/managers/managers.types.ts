@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+const PasswordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .max(32, 'Password must be at most 32 characters')
+  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/\d/, 'Password must contain at least one number')
+  .regex(/[^a-zA-Z0-9]/, 'Password must contain at least one special character');
+
 export const ManagersRowSchema = z
   .object({
     id: z.uuid(),
@@ -93,7 +102,8 @@ export type EmailVerificationRequest = z.infer<typeof emailVerificationRequestsS
 export const verifyManagerDataSchema = NewManagerDataSchema.pick({
   email: true,
 }).extend({
-  code: z.string()
+  code: z
+    .string()
     .min(6, 'Verification code must be at least 6 characters long')
     .max(6, 'Verification code must be exactly 6 characters long'),
 });
@@ -106,3 +116,34 @@ export const loginManagerDataSchema = NewManagerDataSchema.pick({
 }).strict();
 
 export type LoginManagerData = z.infer<typeof loginManagerDataSchema>;
+
+export const ResendVerificationCodeDataSchema = ManagersRowSchema.pick({
+  email: true,
+}).strict();
+
+export type ResendVerificationCodeData = z.infer<typeof ResendVerificationCodeDataSchema>;
+
+export const ForgotPasswordDataSchema = ManagersRowSchema.pick({
+  email: true,
+}).strict();
+
+export type ForgotPasswordData = z.infer<typeof ForgotPasswordDataSchema>;
+
+export const PasswordUpdateDataSchema = z
+  .object({
+    email: z.email(),
+    password: PasswordSchema,
+    token: z.string().trim().min(10),
+  })
+  .strict();
+
+export type PasswordUpdateData = z.infer<typeof PasswordUpdateDataSchema>;
+
+export const ValidateTokenDataSchema = z
+  .object({
+    request_id: z.uuid(),
+    token: z.string().trim().min(10),
+  })
+  .strict();
+
+export type ValidateTokenData = z.infer<typeof ValidateTokenDataSchema>;

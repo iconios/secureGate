@@ -1,5 +1,6 @@
 import { transporter } from './mailer';
 
+// Html escape function
 const escapeHtml = (value: string) =>
   value
     .replaceAll('&', '&amp;')

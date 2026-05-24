@@ -3,6 +3,7 @@ import path from 'path';
 import 'winston-daily-rotate-file';
 
 const LOG_DIR = process.env.LOG_DIR || path.join(process.cwd(), 'logs');
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Shared timestamp
 const timestampFormat = format.timestamp({
@@ -20,28 +21,29 @@ const consoleFormat = format.combine(
   }),
 );
 
+
 // File format (JSON, structured, no color)
-const fileFormat = format.combine(timestampFormat, format.errors({ stack: true }), format.json());
+const jsonFormat = format.combine(timestampFormat, format.errors({ stack: true }), format.json());
 
 const logger = createLogger({
   level: process.env.LOG_LEVEL || 'info',
   exitOnError: false,
   transports: [
     new transports.Console({
-      format: consoleFormat,
+      format: isProduction ? jsonFormat : consoleFormat,
     }),
 
     new transports.File({
       filename: path.join(LOG_DIR, 'error.log'),
       level: 'error',
-      format: fileFormat,
+      format: jsonFormat,
     }),
 
     new transports.DailyRotateFile({
       filename: path.join(LOG_DIR, 'combined-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',
       maxFiles: '14d',
-      format: fileFormat,
+      format: jsonFormat,
     }),
   ],
 });

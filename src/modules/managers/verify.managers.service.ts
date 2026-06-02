@@ -9,14 +9,14 @@ Plan:
 */
 
 import { randomUUID } from 'crypto';
-import logger from '../../common/winston/logger';
-import { VerifyManagerData, verifyManagerDataSchema } from './managers.types';
-import { supabaseAdmin } from '../../common/supabase/supabase';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import { compareString } from '../../utils/hashHelper';
-import { successResponseHelper } from '../../utils/successResponseHelper';
+import logger from '../../common/winston/logger.js';
+import { VerifyManagerData, verifyManagerDataSchema } from './managers.types.js';
+import { supabaseAdmin } from '../../common/supabase/supabase.js';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import { compareString } from '../../utils/hashHelper.js';
+import { successResponseHelper } from '../../utils/successResponseHelper.js';
 import { ZodError } from 'zod';
-import { redactEmailUsername } from '../../utils/redactEmailUsername';
+import { redactEmailUsername } from '../../utils/redactEmailUsername.js';
 
 const VerifyManagerService = async (verifyManagerData: VerifyManagerData) => {
   const isDev = process.env.NODE_ENV === 'development';

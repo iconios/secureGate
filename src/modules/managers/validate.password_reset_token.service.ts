@@ -8,14 +8,14 @@
  */
 
 import { ZodError } from 'zod';
-import { supabaseAdmin } from '../../common/supabase/supabase';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import { compareString } from '../../utils/hashHelper';
-import { successResponseHelper } from '../../utils/successResponseHelper';
-import { ValidateTokenData, ValidateTokenDataSchema } from './managers.types';
+import { supabaseAdmin } from '../../common/supabase/supabase.js';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import { compareString } from '../../utils/hashHelper.js';
+import { successResponseHelper } from '../../utils/successResponseHelper.js';
+import { ValidateTokenData, ValidateTokenDataSchema } from './managers.types.js';
 import { randomUUID } from 'crypto';
-import logger from '../../common/winston/logger';
-import { redactEmailUsername } from '../../utils/redactEmailUsername';
+import logger from '../../common/winston/logger.js';
+import { redactEmailUsername } from '../../utils/redactEmailUsername.js';
 
 /*
 #Plan:

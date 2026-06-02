@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import ManagerRouter from './modules/managers/managers.routes';
 import logger from './common/winston/logger';
 import { errorResponseHelper } from './utils/errorResponseHelper';
+import PlansRouter from './modules/subscriptionPlans/plans.routes';
 
 const app = express();
 const PORT = process.env.PORT || 3010;
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.get('/health', (_, res) => res.send('OK'));
 app.use('/api/v1/managers', ManagerRouter);
+app.use('/api/v1/subscription_plans', PlansRouter);
 
 app.use((req: Request, res: Response) => {
   logger.warn('Endpoint not found', {
@@ -27,12 +29,15 @@ app.use((req: Request, res: Response) => {
     originalUrl: req.originalUrl,
   });
 
-  res.status(404).json(
-    errorResponseHelper(
-      'Endpoint not found',
-      'ENDPOINT_NOT_FOUND',
-      `The route ${req.method} ${req.path} does not exist.`,
-    ));
+  res
+    .status(404)
+    .json(
+      errorResponseHelper(
+        'Endpoint not found',
+        'ENDPOINT_NOT_FOUND',
+        `The route ${req.method} ${req.path} does not exist.`,
+      ),
+    );
 });
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -50,14 +55,16 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     originalUrl: req.originalUrl,
   });
 
-  res.status(500).json(
-    errorResponseHelper(
-      'Something went wrong',
-      'INTERNAL_SERVER_ERROR',
-      'Something went wrong',
-      err
-    )
-  )
+  res
+    .status(500)
+    .json(
+      errorResponseHelper(
+        'Something went wrong',
+        'INTERNAL_SERVER_ERROR',
+        'Something went wrong',
+        err,
+      ),
+    );
 });
 
 app.listen(PORT, () => {

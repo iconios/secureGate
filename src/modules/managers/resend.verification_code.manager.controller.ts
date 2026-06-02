@@ -8,9 +8,9 @@
 */
 
 import { Request, Response } from 'express';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import ResendVerificationCodeManagerService from './resend.verification_code.managers.service';
-import logger from '../../common/winston/logger';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import ResendVerificationCodeManagerService from './resend.verification_code.managers.service.js';
+import logger from '../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
 
 const ResendVerificationCodeManagerController = async (req: Request, res: Response) => {

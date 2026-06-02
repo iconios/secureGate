@@ -1,4 +1,4 @@
-import { transporter } from './mailer';
+import { transporter } from './mailer.js';
 
 // Html escape function
 const escapeHtml = (value: string) =>

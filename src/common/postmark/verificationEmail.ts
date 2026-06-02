@@ -1,4 +1,4 @@
-import { transporter } from './mailer';
+import { transporter } from './mailer.js';
 
 const sendVerificationEmail = async (email: string, code: string, fullName: string) => {
   const fromAddress = `"${process.env.APP_NAME}" <${process.env.MAIL_FROM}>`;

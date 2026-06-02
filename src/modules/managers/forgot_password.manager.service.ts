@@ -8,16 +8,16 @@
  */
 
 import { randomUUID } from 'crypto';
-import { supabaseAdmin } from '../../common/supabase/supabase';
-import logger from '../../common/winston/logger';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import { hashString } from '../../utils/hashHelper';
-import { tokenGenHelper } from '../../utils/tokenGenHelper';
-import { ForgotPasswordData, ForgotPasswordDataSchema } from './managers.types';
-import { redactEmailUsername } from '../../utils/redactEmailUsername';
-import { userAccountSettings } from '../../common/configs';
-import sendPasswordResetEmail from '../../common/postmark/resetPasswordEmail';
-import { successResponseHelper } from '../../utils/successResponseHelper';
+import { supabaseAdmin } from '../../common/supabase/supabase.js';
+import logger from '../../common/winston/logger.js';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import { hashString } from '../../utils/hashHelper.js';
+import { tokenGenHelper } from '../../utils/tokenGenHelper.js';
+import { ForgotPasswordData, ForgotPasswordDataSchema } from './managers.types.js';
+import { redactEmailUsername } from '../../utils/redactEmailUsername.js';
+import { userAccountSettings } from '../../common/configs.js';
+import sendPasswordResetEmail from '../../common/postmark/resetPasswordEmail.js';
+import { successResponseHelper } from '../../utils/successResponseHelper.js';
 import { ZodError } from 'zod';
 
 /*

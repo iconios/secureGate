@@ -7,18 +7,18 @@
  * - Sending the new verification code to the user.
  */
 
-import { ResendVerificationCodeData, ResendVerificationCodeDataSchema } from './managers.types';
-import { supabaseAdmin } from '../../common/supabase/supabase';
-import { generateUniqueCode } from '../../utils/codeGenHelper';
-import { hashString } from '../../utils/hashHelper';
-import { userAccountSettings } from '../../common/configs';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import sendVerificationEmail from '../../common/postmark/verificationEmail';
-import { successResponseHelper } from '../../utils/successResponseHelper';
+import { ResendVerificationCodeData, ResendVerificationCodeDataSchema } from './managers.types.js';
+import { supabaseAdmin } from '../../common/supabase/supabase.js';
+import { generateUniqueCode } from '../../utils/codeGenHelper.js';
+import { hashString } from '../../utils/hashHelper.js';
+import { userAccountSettings } from '../../common/configs.js';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import sendVerificationEmail from '../../common/postmark/verificationEmail.js';
+import { successResponseHelper } from '../../utils/successResponseHelper.js';
 import { randomUUID } from 'crypto';
-import logger from '../../common/winston/logger';
+import logger from '../../common/winston/logger.js';
 import { ZodError } from 'zod';
-import { redactEmailUsername } from '../../utils/redactEmailUsername';
+import { redactEmailUsername } from '../../utils/redactEmailUsername.js';
 
 /*
 #Plan:

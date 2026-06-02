@@ -9,15 +9,15 @@ Plan:
 */
 
 import { randomUUID } from 'crypto';
-import { supabaseAdmin } from '../../common/supabase/supabase';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import { compareString } from '../../utils/hashHelper';
-import { successResponseHelper } from '../../utils/successResponseHelper';
-import { LoginManagerData, loginManagerDataSchema } from './managers.types';
+import { supabaseAdmin } from '../../common/supabase/supabase.js';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import { compareString } from '../../utils/hashHelper.js';
+import { successResponseHelper } from '../../utils/successResponseHelper.js';
+import { LoginManagerData, loginManagerDataSchema } from './managers.types.js';
 import jwt from 'jsonwebtoken';
-import logger from '../../common/winston/logger';
+import logger from '../../common/winston/logger.js';
 import { ZodError } from 'zod';
-import { redactEmailUsername } from '../../utils/redactEmailUsername';
+import { redactEmailUsername } from '../../utils/redactEmailUsername.js';
 
 const LoginManagerService = async (loginData: LoginManagerData) => {
   const isDev = process.env.NODE_ENV === 'development';
@@ -71,17 +71,19 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
       id: manager.id,
       full_name: manager.full_name,
       email: manager.email,
+      role: 'manager',
     };
     const token = jwt.sign(payload, JWT_SECRET!, { expiresIn: '10h' });
 
     // 5. Return the token and manager details
     return successResponseHelper('Login successful', {
       token,
-      manager: {
+      user: {
         id: manager.id,
         full_name: manager.full_name,
         email: manager.email,
       },
+      role: 'manager',
     });
   } catch (error) {
     if (isDev) {

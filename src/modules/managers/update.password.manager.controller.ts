@@ -7,9 +7,9 @@
 */
 
 import { Request, Response } from 'express';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import UpdatePasswordManagerService from './update.password.manager.service';
-import logger from '../../common/winston/logger';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import UpdatePasswordManagerService from './update.password.manager.service.js';
+import logger from '../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
 
 const UpdatePasswordManagerController = async (req: Request, res: Response) => {

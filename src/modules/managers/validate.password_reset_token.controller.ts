@@ -7,11 +7,10 @@
 */
 
 import { Request, Response } from 'express';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import ValidateManagerPasswordResetTokenService from './validate.password_reset_token.service';
+import ValidateManagerPasswordResetTokenService from './validate.password_reset_token.service.js';
 import { fileURLToPath } from 'url';
 import { join, dirname } from 'path';
-import logger from '../../common/winston/logger';
+import logger from '../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const passwordResetFormPath = join(__dirname, '../../../common/postmark/passwordResetForm.htm');

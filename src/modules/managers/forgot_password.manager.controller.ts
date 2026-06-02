@@ -8,10 +8,10 @@
 */
 
 import { Request, Response } from 'express';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import logger from '../../common/winston/logger';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import logger from '../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
-import ForgotPasswordManagerService from './forgot_password.manager.service';
+import ForgotPasswordManagerService from './forgot_password.manager.service.js';
 
 const ForgotPasswordManagerController = async (req: Request, res: Response) => {
   const managerLogs = logger.child({

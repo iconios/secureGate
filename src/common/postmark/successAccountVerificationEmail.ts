@@ -1,4 +1,4 @@
-import { transporter } from './mailer';
+import { transporter } from './mailer.js';
 
 // Account successful verification email function
 const sendSuccessVerificationEmail = async (email: string, fullName: string) => {

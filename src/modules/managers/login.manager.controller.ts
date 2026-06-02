@@ -8,9 +8,9 @@ Plan:
 */
 
 import { Request, Response } from 'express';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import LoginManagerService from './login.manager.service';
-import logger from '../../common/winston/logger';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import LoginManagerService from './login.manager.service.js';
+import logger from '../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
 
 const LoginManagerController = async (req: Request, res: Response) => {

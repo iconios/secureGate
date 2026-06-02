@@ -22,17 +22,17 @@ Plan:
 */
 
 import { ZodError } from 'zod';
-import { userAccountSettings } from '../../common/configs';
-import sendVerificationEmail from '../../common/postmark/verificationEmail';
-import { supabaseAdmin } from '../../common/supabase/supabase';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import { hashString } from '../../utils/hashHelper';
-import { NewManagerData, NewManagerDataSchema } from './managers.types';
-import logger from '../../common/winston/logger';
+import { userAccountSettings } from '../../common/configs.js';
+import sendVerificationEmail from '../../common/postmark/verificationEmail.js';
+import { supabaseAdmin } from '../../common/supabase/supabase.js';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import { hashString } from '../../utils/hashHelper.js';
+import { NewManagerData, NewManagerDataSchema } from './managers.types.js';
+import logger from '../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
-import { maskPhone } from '../../utils/maskPhoneHelper';
-import { successResponseHelper } from '../../utils/successResponseHelper';
-import { generateUniqueCode } from '../../utils/codeGenHelper';
+import { maskPhone } from '../../utils/maskPhoneHelper.js';
+import { successResponseHelper } from '../../utils/successResponseHelper.js';
+import { generateUniqueCode } from '../../utils/codeGenHelper.js';
 
 const CreateManagerService = async (newManagerData: NewManagerData) => {
   const now = new Date();

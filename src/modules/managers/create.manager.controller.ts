@@ -7,9 +7,9 @@ Plan:
 */
 
 import { Request, Response } from 'express';
-import CreateManagerService from './create.managers.service';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import logger from '../../common/winston/logger';
+import CreateManagerService from './create.managers.service.js';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import logger from '../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
 
 const CreateManagerController = async (req: Request, res: Response) => {

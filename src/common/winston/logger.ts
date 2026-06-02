@@ -21,7 +21,6 @@ const consoleFormat = format.combine(
   }),
 );
 
-
 // File format (JSON, structured, no color)
 const jsonFormat = format.combine(timestampFormat, format.errors({ stack: true }), format.json());
 

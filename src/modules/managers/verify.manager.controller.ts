@@ -7,9 +7,9 @@ Plan:
 */
 
 import { Request, Response } from 'express';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import VerifyManagerService from './verify.managers.service';
-import logger from '../../common/winston/logger';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import VerifyManagerService from './verify.managers.service.js';
+import logger from '../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
 
 const VerifyManagerController = async (req: Request, res: Response) => {

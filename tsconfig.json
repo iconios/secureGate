@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",                          /* Set modern JavaScript output version */
+    "module": "NodeNext",                        /* Handles modern import/export syntax safely */
+    "moduleResolution": "NodeNext",              /* Resolves node packages correctly */
+    "lib": ["ES2022"],                           /* Standard language features */
+    "allowJs": true,                             /* Allows mixing .js and .ts files if needed */
+    "outDir": "./dist",                          /* Where compiled files will be saved */
+    "rootDir": "./src",                          /* Where your active typescript source code lives */
+    "strict": true,                              /* Enables strict type-checking bugs safeguards */
+    "noImplicitAny": true,                       /* Prevents fallback generic type bugs */
+    "esModuleInterop": true,                     /* Allows compatibility with old commonJS packages */
+    "skipLibCheck": true,                        /* Speeds up compilation by skipping package checks */
+    "forceConsistentCasingInFileNames": true     /* Prevents cross-platform file path errors */
+  },
+  "include": [
+    "src/**/*",
+    "src/types.d.ts"                                   /* Automatically indexes your source code and your types.d.ts file */
+  ],
+  "exclude": [
+    "node_modules",                              /* Ignores standard library bundles */
+    "dist"
+  ]
+}

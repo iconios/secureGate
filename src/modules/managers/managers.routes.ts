@@ -1,11 +1,11 @@
 import express from 'express';
-import CreateManagerController from './create.manager.controller';
-import VerifyManagerController from './verify.manager.controller';
-import LoginManagerController from './login.manager.controller';
-import ResendVerificationCodeManagerController from './resend.verification_code.manager.controller';
-import ForgotPasswordManagerController from './forgot_password.manager.controller';
-import ValidatePasswordResetTokenManagerController from './validate.password_reset_token.controller';
-import UpdatePasswordManagerController from './update.password.manager.controller';
+import CreateManagerController from './create.manager.controller.js';
+import VerifyManagerController from './verify.manager.controller.js';
+import LoginManagerController from './login.manager.controller.js';
+import ResendVerificationCodeManagerController from './resend.verification_code.manager.controller.js';
+import ForgotPasswordManagerController from './forgot_password.manager.controller.js';
+import ValidatePasswordResetTokenManagerController from './validate.password_reset_token.controller.js';
+import UpdatePasswordManagerController from './update.password.manager.controller.js';
 
 const ManagerRouter = express.Router();
 

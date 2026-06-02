@@ -7,15 +7,15 @@
  */
 
 import { ZodError } from 'zod';
-import { PasswordUpdateData, PasswordUpdateDataSchema } from './managers.types';
-import { errorResponseHelper } from '../../utils/errorResponseHelper';
-import { supabaseAdmin } from '../../common/supabase/supabase';
-import { compareString, hashString } from '../../utils/hashHelper';
-import sendPasswordUpdateSuccessfulEmail from '../../common/postmark/successPasswordUpdateEmail';
-import { successResponseHelper } from '../../utils/successResponseHelper';
-import logger from '../../common/winston/logger';
+import { PasswordUpdateData, PasswordUpdateDataSchema } from './managers.types.js';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
+import { supabaseAdmin } from '../../common/supabase/supabase.js';
+import { compareString, hashString } from '../../utils/hashHelper.js';
+import sendPasswordUpdateSuccessfulEmail from '../../common/postmark/successPasswordUpdateEmail.js';
+import { successResponseHelper } from '../../utils/successResponseHelper.js';
+import logger from '../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
-import { redactEmailUsername } from '../../utils/redactEmailUsername';
+import { redactEmailUsername } from '../../utils/redactEmailUsername.js';
 
 /*
 #Plan:

@@ -10,7 +10,6 @@ const EstateRowSchema = z.object({
   payment_id: z.uuid().nullable(),
   updated_at: z.iso.datetime().nullable(),
   number_of_households: z.number().int().nonnegative().default(0),
-  payment_expires_at: z.iso.datetime().nullable(),
   status: z.enum(['active', 'inactive', 'pending', 'expired']).default('pending'),
   logoUrl: z.string(),
 });

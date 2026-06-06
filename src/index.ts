@@ -5,10 +5,12 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 
-import ManagerRouter from './modules/managers/managers.routes';
-import logger from './common/winston/logger';
-import { errorResponseHelper } from './utils/errorResponseHelper';
-import PlansRouter from './modules/subscriptionPlans/plans.routes';
+import ManagerRouter from './modules/managers/managers.routes.js';
+import logger from './common/winston/logger.js';
+import { errorResponseHelper } from './utils/errorResponseHelper.js';
+import PlansRouter from './modules/subscriptionPlans/plans.routes.js';
+import { EstatesManagerRouter } from './modules/estateManagers/estate_manager.routes.js';
+import PaymentRouter from './modules/payments/payment.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3010;
@@ -21,8 +23,10 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/health', (_, res) => res.send('OK'));
 app.use('/api/v1/managers', ManagerRouter);
 app.use('/api/v1/subscription_plans', PlansRouter);
+app.use('/api/v1/estates_manager', EstatesManagerRouter);
+app.use('/api/v1/payments', PaymentRouter);
 
-app.use((req: Request, res: Response) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   logger.warn('Endpoint not found', {
     method: req.method,
     path: req.path,
@@ -54,6 +58,10 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     path: req.path,
     originalUrl: req.originalUrl,
   });
+
+  if (res.headersSent) {
+    return next(err);
+  }
 
   res
     .status(500)

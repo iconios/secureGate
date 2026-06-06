@@ -11,6 +11,8 @@ import { supabaseAdmin } from '../../common/supabase/supabase.js';
 import logger from '../../common/winston/logger.js';
 import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
 import { successResponseHelper } from '../../utils/successResponseHelper.js';
+import { EstateWithDetails, EstateWithDetailsSchema } from './estateManager.types.js';
+import { ZodError } from 'zod';
 
 // Step 1. Get manager id from request (set by authenticateToken middleware) - This will be passed as an argument to the service function
 const GetManagerEstatesService = async (managerId: string) => {
@@ -27,7 +29,7 @@ const GetManagerEstatesService = async (managerId: string) => {
         `
                 id,
                 estate_id,
-                estates (
+                estates!estate_id (
                     id, 
                     name, 
                     location, 
@@ -36,12 +38,12 @@ const GetManagerEstatesService = async (managerId: string) => {
                     status, 
                     logo_url,
                     plan_id,
-                    subscription_plans (
+                    subscription_plans!plan_id (
                         name, 
                         household_limit
                     ), 
                     payment_id,
-                    payments (
+                    payments!payment_id (
                         id, 
                         expires_at, 
                         paid_at, 
@@ -68,11 +70,7 @@ const GetManagerEstatesService = async (managerId: string) => {
       estateManagerLogs.info('No estates found for manager', {
         managerId,
       });
-      return errorResponseHelper(
-        'No estates found for this manager',
-        'NO_ESTATES_FOUND',
-        'No estates found for this manager',
-      );
+      return successResponseHelper('No estates found for this manager', estates);
     }
 
     const validEstates = estates.filter((item) => item.estates !== null);
@@ -80,14 +78,10 @@ const GetManagerEstatesService = async (managerId: string) => {
       estateManagerLogs.info('No valid estates found for manager', {
         managerId,
       });
-      return errorResponseHelper(
-        'No valid estates found for this manager',
-        'NO_VALID_ESTATES_FOUND',
-        'No valid estates found for this manager',
-      );
+      return successResponseHelper('No valid estates found for this manager', validEstates);
     }
 
-    const cleanEstatesList = validEstates.map((item) => {
+    const cleanEstatesList: EstateWithDetails = validEstates.map((item) => {
       const estate = item.estates as any;
       return {
         id: item.id,
@@ -107,14 +101,26 @@ const GetManagerEstatesService = async (managerId: string) => {
         estate_payment_status: estate.payments?.status,
       };
     });
+    console.log('Clean Estates List', cleanEstatesList);
+    const validationResult = EstateWithDetailsSchema.parse(cleanEstatesList);
 
     // Step 3. Return the details of each estate in the response
-    return successResponseHelper('Estates fetched successfully', cleanEstatesList);
+    return successResponseHelper('Estates fetched successfully', validationResult);
   } catch (error) {
     estateManagerLogs.error('Unexpected layout exception crash fetching estates', {
       managerId,
       error: error instanceof Error ? error.message : String(error),
     });
+
+    if (error instanceof ZodError) {
+      return errorResponseHelper(
+        'Data validation failed for estates list',
+        'VALIDATION_ERROR',
+        'The databse returned data that does not match the expected application format',
+        error.issues,
+      );
+    }
+
     return errorResponseHelper(
       'Error fetching estates for manager',
       'ESTATES_FETCH_ERROR',

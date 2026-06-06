@@ -2,10 +2,11 @@
 /*
 Plan:
 1. Accept and validate the login credentials (email and password)
-2. Check if the manager exists
+2. Check if the manager exists and is verified
 3. Verify the password
 4. Generate a JWT token for the manager
-5. Return the token and manager details
+5. Update last_login_at record
+6. Return the token and manager details
 */
 
 import { randomUUID } from 'crypto';
@@ -34,7 +35,7 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
     // 2. Check if the manager exists
     const { data: manager, error } = await supabaseAdmin
       .from('managers')
-      .select('id, full_name, email, password_hash')
+      .select('id, full_name, email, password_hash, is_verified')
       .eq('email', email)
       .maybeSingle();
 
@@ -51,12 +52,22 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
       );
     }
 
+    if (!manager.is_verified) {
+      managerLogs.warn('User account not verified', {
+        email: redactEmailUsername(manager.email),
+      });
+      return errorResponseHelper(
+        'User account not verified',
+        'USER_NOT_VERIFIED',
+        'User account not verified',
+      );
+    }
+
     // 3. Verify the password
     const isPasswordValid = await compareString(password, manager.password_hash);
     if (!isPasswordValid) {
       managerLogs.error('Invalid email or password', {
         email: redactEmailUsername(email),
-        error: error ?? null,
       });
 
       return errorResponseHelper(
@@ -75,7 +86,32 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
     };
     const token = jwt.sign(payload, JWT_SECRET!, { expiresIn: '10h' });
 
-    // 5. Return the token and manager details
+    // 5. Update last_login_at record
+    const { error: updateError } = await supabaseAdmin
+      .from('managers')
+      .update({
+        last_login_at: new Date().toISOString(),
+      })
+      .eq('id', manager.id)
+      .eq('email', manager.email);
+
+    if (updateError) {
+      managerLogs.error('Error updating manager record while logging in', {
+        email: redactEmailUsername(email),
+        error: updateError,
+      });
+      return errorResponseHelper(
+        'Error updating manager record while logging in',
+        'UPDATE_ERROR',
+        'Error updating manager record while logging in',
+        updateError,
+      );
+    }
+
+    // 6. Return the token and manager details
+    managerLogs.info('Login successful for manager', {
+      email: redactEmailUsername(manager.email),
+    });
     return successResponseHelper('Login successful', {
       token,
       user: {

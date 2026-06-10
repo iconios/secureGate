@@ -147,3 +147,10 @@ export const ValidateTokenDataSchema = z
   .strict();
 
 export type ValidateTokenData = z.infer<typeof ValidateTokenDataSchema>;
+
+export type FetchManagerInfo = {
+  id: string;
+  full_name: string;
+  email: string;
+  role: string;
+} | null;

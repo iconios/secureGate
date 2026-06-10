@@ -11,12 +11,20 @@ import { errorResponseHelper } from './utils/errorResponseHelper.js';
 import PlansRouter from './modules/subscriptionPlans/plans.routes.js';
 import { EstatesManagerRouter } from './modules/estateManagers/estate_manager.routes.js';
 import PaymentRouter from './modules/payments/payment.routes.js';
+import UpdateEstatePaymentDetailsController from './modules/payments/update.estate_payment_details.controller.js';
 
 const app = express();
 const PORT = process.env.PORT || 3010;
 
 app.use(cors());
 app.use(helmet());
+
+app.post(
+  'api/v1/payments/webhook/paystack',
+  express.raw({ type: 'application/json' }),
+  UpdateEstatePaymentDetailsController,
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

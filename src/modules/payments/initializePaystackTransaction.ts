@@ -35,11 +35,21 @@ export const initializePaystackTransactionService = async (
 
     // 4. Send the response to the call
     if (!response.ok || !result.status) {
-      throw new Error(result.message || 'Unable to initialize paystack payment');
+      return {
+        status: false,
+        message: `result.message || 'Unable to initialize paystack payment'`,
+        data: null,
+      };
     }
 
     return result;
-  } catch (error: any) {
-    throw new Error('Unknown error while initializing payment', error);
+  } catch (error: unknown) {
+    const errMessage =
+      error instanceof Error ? error?.message : 'Unknown error while initializing payment';
+    return {
+      status: false,
+      message: errMessage,
+      data: null,
+    };
   }
 };

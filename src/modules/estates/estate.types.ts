@@ -1,3 +1,4 @@
+import { UUID } from 'crypto';
 import { z } from 'zod';
 
 const EstateRowSchema = z.object({
@@ -46,4 +47,20 @@ export interface Database {
       };
     };
   };
+}
+
+export interface IPaymentEstateManagerDetailsArgs {
+  p_payment_id: string;
+  p_estate_id: string;
+  p_plan_id: string;
+  p_manager_id: string;
+}
+
+export interface IPaymentEstateManagerDetails {
+  payment_expires_at: string;
+  estate_name: string;
+  plan_name: string;
+  currency: string;
+  full_name: string;
+  period: string;
 }

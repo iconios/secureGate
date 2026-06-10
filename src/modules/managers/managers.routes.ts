@@ -6,6 +6,8 @@ import ResendVerificationCodeManagerController from './resend.verification_code.
 import ForgotPasswordManagerController from './forgot_password.manager.controller.js';
 import ValidatePasswordResetTokenManagerController from './validate.password_reset_token.controller.js';
 import UpdatePasswordManagerController from './update.password.manager.controller.js';
+import FetchManagerInfoController from './fetch.manager.info.controller.js';
+import extractToken from '../../middleware/extractToken.js';
 
 const ManagerRouter = express.Router();
 
@@ -17,5 +19,6 @@ ManagerRouter.post('/forgot-password', ForgotPasswordManagerController);
 ManagerRouter.post('validate-password-token', ValidatePasswordResetTokenManagerController);
 ManagerRouter.post('/password-update', UpdatePasswordManagerController);
 ManagerRouter.post('resend-verification-code', ResendVerificationCodeManagerController);
+ManagerRouter.post('/info', extractToken, FetchManagerInfoController);
 
 export default ManagerRouter;

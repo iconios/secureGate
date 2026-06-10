@@ -56,7 +56,7 @@ const GetManagerEstatesService = async (managerId: string) => {
 
     if (error) {
       estateManagerLogs.error('Failed to fetch estates for manager', {
-        managerId,
+        manager_id: managerId,
       });
       return errorResponseHelper(
         'Failed to fetch estates for manager',
@@ -68,7 +68,7 @@ const GetManagerEstatesService = async (managerId: string) => {
 
     if (!estates || estates.length === 0) {
       estateManagerLogs.info('No estates found for manager', {
-        managerId,
+        manager_id: managerId,
       });
       return successResponseHelper('No estates found for this manager', estates);
     }
@@ -76,7 +76,7 @@ const GetManagerEstatesService = async (managerId: string) => {
     const validEstates = estates.filter((item) => item.estates !== null);
     if (validEstates.length === 0) {
       estateManagerLogs.info('No valid estates found for manager', {
-        managerId,
+        manager_id: managerId,
       });
       return successResponseHelper('No valid estates found for this manager', validEstates);
     }
@@ -108,7 +108,7 @@ const GetManagerEstatesService = async (managerId: string) => {
     return successResponseHelper('Estates fetched successfully', validationResult);
   } catch (error) {
     estateManagerLogs.error('Unexpected layout exception crash fetching estates', {
-      managerId,
+      manager_id: managerId,
       error: error instanceof Error ? error.message : String(error),
     });
 

@@ -264,7 +264,7 @@ const InitializeEstatesubscriptionPaymentService = async (input: InitializeEstat
         currency: 'NGN',
         provider: 'paystack',
       })
-      .select('id')
+      .select('id, currency')
       .single();
 
     if (paymentError) {
@@ -292,7 +292,7 @@ const InitializeEstatesubscriptionPaymentService = async (input: InitializeEstat
          user_id
          plan_id
          period
-         purpose
+         currency
       */
     const callbackUrl = `${baseUrl}/payment/callback`;
     let paystackResponse;
@@ -309,7 +309,7 @@ const InitializeEstatesubscriptionPaymentService = async (input: InitializeEstat
           user_id: userData.id,
           plan_id,
           period,
-          purpose: paymentPurpose,
+          currency: paymentData.currency,
         },
       });
     } catch (error) {

@@ -29,3 +29,25 @@ export const InitializeEstatePaymentInputSchema = z.object({
 });
 
 export type InitializeEstatePaymentInput = z.infer<typeof InitializeEstatePaymentInputSchema>;
+
+export type PaystackVerifyResponse = {
+  status: boolean;
+  message: string;
+  data: {
+    status: string;
+    reference: string;
+    amount: number;
+    currency: string;
+    metadata: {
+      payment_id: string;
+      estate_id: string;
+      user_id: string;
+      plan_id: string;
+      period: string;
+      currency: string;
+    };
+  };
+  customer: {
+    email: string;
+  };
+};

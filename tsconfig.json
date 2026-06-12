@@ -11,11 +11,17 @@
     "noImplicitAny": true /* Prevents fallback generic type bugs */,
     "esModuleInterop": true /* Allows compatibility with old commonJS packages */,
     "skipLibCheck": true /* Speeds up compilation by skipping package checks */,
-    "forceConsistentCasingInFileNames": true /* Prevents cross-platform file path errors */
+    "forceConsistentCasingInFileNames": true /* Prevents cross-platform file path errors */,
+    "types": ["node"]
   },
   "include": [
     "src/**/*",
     "src/types.d.ts" /* Automatically indexes your source code and your types.d.ts file */
   ],
-  "exclude": ["node_modules" /* Ignores standard library bundles */, "dist"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "drizzle.config.ts" /* Ignores standard library bundles */,
+    "dist"
+  ]
 }

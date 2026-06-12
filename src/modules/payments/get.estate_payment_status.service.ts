@@ -426,7 +426,7 @@ const GetEstatePaymentStatusService = async (reference: string) => {
     );
 
     if (!emailResult.success) {
-      estateLogs.error('Payment confirmed but email sending failed', {
+      estateLogs.warn('Payment confirmed but email sending failed', {
         reference,
         payment_id,
       });

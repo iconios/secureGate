@@ -294,7 +294,7 @@ const InitializeEstatesubscriptionPaymentService = async (input: InitializeEstat
          period
          currency
       */
-    const callbackUrl = `${baseUrl}/payment/callback`;
+    const callbackUrl = `${baseUrl}/api/v1/payments/callback`;
     let paystackResponse;
 
     try {

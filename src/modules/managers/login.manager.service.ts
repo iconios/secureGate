@@ -10,7 +10,6 @@ Plan:
 */
 
 import { randomUUID } from 'crypto';
-import { supabaseAdmin } from '../../common/supabase/supabase.js';
 import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
 import { compareString } from '../../utils/hashHelper.js';
 import { successResponseHelper } from '../../utils/successResponseHelper.js';
@@ -19,6 +18,9 @@ import jwt from 'jsonwebtoken';
 import logger from '../../common/winston/logger.js';
 import { ZodError } from 'zod';
 import { redactEmailUsername } from '../../utils/redactEmailUsername.js';
+import db from '../../db/index.js';
+import { managers } from '../../db/schema/managers.js';
+import { eq, and } from 'drizzle-orm';
 
 const LoginManagerService = async (loginData: LoginManagerData) => {
   const isDev = process.env.NODE_ENV === 'development';
@@ -33,16 +35,22 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
     const { email, password } = loginManagerDataSchema.parse(loginData);
 
     // 2. Check if the manager exists
-    const { data: manager, error } = await supabaseAdmin
-      .from('managers')
-      .select('id, full_name, email, password_hash, is_verified')
-      .eq('email', email)
-      .maybeSingle();
+    const managerData = await db
+      .select({
+        id: managers.id,
+        full_name: managers.fullName,
+        manager_email: managers.email,
+        password_hash: managers.passwordHash,
+        is_verified: managers.isVerified,
+      })
+      .from(managers)
+      .where(eq(managers.email, email))
+      .limit(1);
 
-    if (error || !manager) {
+    const manager = managerData[0];
+    if (!manager) {
       managerLogs.error('Invalid email or password', {
         email: redactEmailUsername(email),
-        error: error ?? null,
       });
 
       return errorResponseHelper(
@@ -54,7 +62,7 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
 
     if (!manager.is_verified) {
       managerLogs.warn('User account not verified', {
-        email: redactEmailUsername(manager.email),
+        email: redactEmailUsername(manager.manager_email),
       });
       return errorResponseHelper(
         'User account not verified',
@@ -64,10 +72,10 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
     }
 
     // 3. Verify the password
-    const isPasswordValid = await compareString(password, manager.password_hash);
+    const isPasswordValid = await compareString(password, manager.password_hash!);
     if (!isPasswordValid) {
       managerLogs.error('Invalid email or password', {
-        email: redactEmailUsername(email),
+        email: redactEmailUsername(manager.manager_email),
       });
 
       return errorResponseHelper(
@@ -81,43 +89,41 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
     const payload = {
       id: manager.id,
       full_name: manager.full_name,
-      email: manager.email,
+      email: manager.manager_email,
       role: 'manager',
     };
     const token = jwt.sign(payload, JWT_SECRET!, { expiresIn: '10h' });
 
     // 5. Update last_login_at record
-    const { error: updateError } = await supabaseAdmin
-      .from('managers')
-      .update({
-        last_login_at: new Date().toISOString(),
+    const [updatedManager] = await db
+      .update(managers)
+      .set({
+        lastLoginAt: new Date().toISOString(),
       })
-      .eq('id', manager.id)
-      .eq('email', manager.email);
+      .where(and(eq(managers.id, manager.id), eq(managers.email, manager.manager_email)))
+      .returning();
 
-    if (updateError) {
+    if (!updatedManager) {
       managerLogs.error('Error updating manager record while logging in', {
         email: redactEmailUsername(email),
-        error: updateError,
       });
       return errorResponseHelper(
         'Error updating manager record while logging in',
         'UPDATE_ERROR',
         'Error updating manager record while logging in',
-        updateError,
       );
     }
 
     // 6. Return the token and manager details
     managerLogs.info('Login successful for manager', {
-      email: redactEmailUsername(manager.email),
+      email: redactEmailUsername(manager.manager_email),
     });
     return successResponseHelper('Login successful', {
       token,
       user: {
         id: manager.id,
         full_name: manager.full_name,
-        email: manager.email,
+        email: manager.manager_email,
       },
       role: 'manager',
     });

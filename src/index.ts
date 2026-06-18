@@ -20,7 +20,7 @@ app.use(cors());
 app.use(helmet());
 
 app.post(
-  'api/v1/payments/webhook/paystack',
+  '/api/v1/payments/webhook/paystack',
   express.raw({ type: 'application/json' }),
   UpdateEstatePaymentDetailsController,
 );

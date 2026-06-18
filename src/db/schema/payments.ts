@@ -6,7 +6,6 @@ import {
   unique,
   text,
   numeric,
-  time,
   jsonb,
 } from 'drizzle-orm/pg-core';
 import { estates } from './estates.js';
@@ -26,7 +25,7 @@ export const payments = pgTable(
     expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'string' }),
     paidBy: uuid('paid_by').notNull(),
     reference: text().notNull(),
-    paidAt: time('paid_at', { withTimezone: true }),
+    paidAt: timestamp('paid_at', { withTimezone: true, mode: 'string' }),
     purpose: text(),
     amount: numeric(),
     status: text(),

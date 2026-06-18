@@ -2,8 +2,9 @@
 /*
 #Plan:
 1. Receive and validate the token
-2. Decode the token
-3. Send response with manager info to caller
+2. Validate JWT secret
+3. Verify the token and catch expiry separately
+4. Send response with manager info to caller
 */
 
 import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
@@ -27,7 +28,7 @@ const FetchManagerInfoService = async (token: string) => {
       return errorResponseHelper('Token cannot be empty', 'EMPTY_TOKEN', 'Token cannot be empty');
     }
 
-    // 2. Decode the token
+    // 2. Validate JWT secret
     const JWT_SECRET = process.env.JWT_SECRET;
     if (!JWT_SECRET) {
       managerLogs.warn('Jwt secret cannot be empty');
@@ -37,6 +38,8 @@ const FetchManagerInfoService = async (token: string) => {
         'Jwt secret cannot be empty',
       );
     }
+
+    // 3. Verify the token and catch expiry separately
     const decoded = jwt.verify(token, JWT_SECRET) as FetchManagerInfo;
     if (!decoded) {
       managerLogs.warn('Token can not be decoded');
@@ -47,7 +50,7 @@ const FetchManagerInfoService = async (token: string) => {
       );
     }
 
-    // 3. Send response with manager info to caller
+    // 4. Send response with manager info to caller
     managerLogs.info('Token decoded successfully', {
       email: redactEmailUsername(decoded.email),
       role: decoded.role,
@@ -61,6 +64,35 @@ const FetchManagerInfoService = async (token: string) => {
       role: decoded.role,
     });
   } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      managerLogs.warn('Manager token expired', {
+        reason: error.message,
+        expiredAt: error.expiredAt,
+      });
+
+      return errorResponseHelper(
+        'Session expired. Please log in again.',
+        'TOKEN_EXPIRED',
+        'Session expired. Please log in again.',
+        {
+          expiredAt: error.expiredAt,
+        },
+      );
+    }
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      managerLogs.warn('Invalid manager token', {
+        reason: error.message,
+      });
+
+      return errorResponseHelper(
+        'Invalid token. Please log in again.',
+        'INVALID_TOKEN',
+        'Invalid token. Please log in again.',
+        error,
+      );
+    }
+
     const errorMessage = error instanceof Error ? error.message : 'unknown error';
     managerLogs.warn('Error while decoding manager token', {
       reason: errorMessage,

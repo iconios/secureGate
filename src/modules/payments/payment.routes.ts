@@ -14,7 +14,7 @@ PaymentRouter.post(
   InitializeEstateSubscriptionPaymentController,
 );
 PaymentRouter.get('/callback', GetEstatePaymentStatusController);
-PaymentRouter.get(
+PaymentRouter.post(
   '/estate/status',
   extractToken,
   authenticateToken,

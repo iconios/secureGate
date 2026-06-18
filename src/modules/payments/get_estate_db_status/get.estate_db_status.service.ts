@@ -24,8 +24,11 @@ export const GetEstateDatabaseStatusService = async (reference: string, user_id:
   });
 
   try {
+    const trimmedReference = reference?.trim();
+    const trimmedUserId = user_id?.trim();
+
     // 1. Get and validate estate reference
-    if (!reference?.trim()) {
+    if (!trimmedReference) {
       estateLogs.warn('Reference is required');
       return errorResponseHelper(
         'Reference is required',
@@ -34,9 +37,9 @@ export const GetEstateDatabaseStatusService = async (reference: string, user_id:
       );
     }
 
-    if (!user_id?.trim()) {
+    if (!trimmedUserId) {
       estateLogs.warn('User id is required', {
-        reference: reference,
+        reference: trimmedReference,
       });
       return errorResponseHelper(
         'User id is required',
@@ -55,13 +58,13 @@ export const GetEstateDatabaseStatusService = async (reference: string, user_id:
         plan_name: subscriptionPlans.name,
       })
       .from(payments)
-      .innerJoin(estates, and(eq(payments.estateId, estates.id), isNull(estates.deletedAt)))
+      .innerJoin(estates, eq(payments.estateId, estates.id))
       .innerJoin(subscriptionPlans, eq(payments.planId, subscriptionPlans.id))
       .innerJoin(
         estateManagers,
         and(eq(estateManagers.managerId, user_id), eq(estateManagers.estateId, payments.estateId)),
       )
-      .where(eq(payments.reference, reference))
+      .where(and(eq(payments.reference, trimmedReference), isNull(estates.deletedAt)))
       .limit(1);
 
     // 3. Get the details of the estate and its payment details and send to the client
@@ -69,8 +72,8 @@ export const GetEstateDatabaseStatusService = async (reference: string, user_id:
 
     if (!estatePayment) {
       estateLogs.info('No estate payment data found', {
-        reference: reference,
-        user_id: user_id,
+        reference: trimmedReference,
+        user_id: trimmedUserId,
       });
 
       return successResponseHelper('No estate payment data found', {
@@ -80,8 +83,8 @@ export const GetEstateDatabaseStatusService = async (reference: string, user_id:
     }
 
     estateLogs.info('Estate payment data found', {
-      reference: reference,
-      user_id,
+      reference: trimmedReference,
+      user_id: trimmedUserId,
     });
 
     return successResponseHelper('Estate payment data found', {

@@ -1,0 +1,1 @@
+ALTER TABLE "payments" ALTER COLUMN "paid_at" TYPE timestamp with time zone USING NULL;

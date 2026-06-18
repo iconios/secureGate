@@ -1,7 +1,7 @@
 'use strict';
 
 export const config = {
-  app_name: [process.env.NEW_RELIC_APP_NAME || 'Backend API'],
+  app_name: [process.env.NEW_RELIC_APP_NAME || 'SecureGateBackend'],
   license_key: process.env.NEW_RELIC_LICENSE_KEY,
 
   logging: {

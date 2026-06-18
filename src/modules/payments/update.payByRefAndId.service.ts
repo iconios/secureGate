@@ -13,10 +13,12 @@
 */
 
 import { randomUUID } from 'crypto';
-import { supabaseAdmin } from '../../common/supabase/supabase.js';
 import logger from '../../common/winston/logger.js';
 import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
 import { successResponseHelper } from '../../utils/successResponseHelper.js';
+import db from '../../db/index.js';
+import { payments } from '../../db/schema/payments.js';
+import { eq, and, ne, or, isNull } from 'drizzle-orm';
 
 const UpdatePaymentByRefAndIdService = async (
   reference: string,
@@ -31,7 +33,13 @@ const UpdatePaymentByRefAndIdService = async (
 
   try {
     // 1. Accept and validate the payment details
-    if (!reference || !payment_id || !amountInKobo || !currency) {
+    if (
+      !reference ||
+      !payment_id ||
+      typeof amountInKobo !== 'number' ||
+      amountInKobo <= 0 ||
+      !currency
+    ) {
       paymentLogs.warn('Payment arguments required');
       return errorResponseHelper(
         'Payment arguments required',
@@ -41,17 +49,19 @@ const UpdatePaymentByRefAndIdService = async (
     }
 
     // 2. Verify that the payment record exists
-    const { data: paymentData, error: paymentError } = await supabaseAdmin
-      .from('payments')
-      .select('id, currency, status, amount')
-      .eq('reference', reference)
-      .neq('status', 'paid')
-      .eq('id', payment_id)
-      .maybeSingle();
+    const [paymentData] = await db
+      .select({
+        id: payments.id,
+        currency: payments.currency,
+        status: payments.status,
+        amount: payments.amount,
+      })
+      .from(payments)
+      .where(and(eq(payments.reference, reference), eq(payments.id, payment_id)))
+      .limit(1);
 
-    if (paymentError || !paymentData) {
+    if (!paymentData) {
       paymentLogs.error('Payment reference not found', {
-        error: paymentError ?? null,
         reference: reference,
         payment_id: payment_id,
       });
@@ -59,7 +69,6 @@ const UpdatePaymentByRefAndIdService = async (
         'Payment reference not found',
         'PAYMENT_NOT_FOUND_OR_ERROR',
         'Payment reference not found',
-        paymentError ?? null,
       );
     }
 
@@ -77,13 +86,13 @@ const UpdatePaymentByRefAndIdService = async (
     }
 
     // 4. Verify that the paystack-sent amount is the same as amount stored on db
-    const amountInNaira = (amountInKobo / 100) as number;
-    if (Number(paymentData.amount) !== amountInNaira) {
+    const dbAmountInKobo = Math.round(Number(paymentData.amount ?? 0) * 100);
+    if (dbAmountInKobo !== amountInKobo) {
       paymentLogs.warn('Payment amount mismatch', {
         reference: reference,
         payment_id: payment_id,
-        paystackSent: amountInNaira,
-        expected: paymentData.amount,
+        paystackSent: `${amountInKobo}kobo`,
+        expected: `${dbAmountInKobo}kobo`,
       });
 
       return errorResponseHelper(
@@ -113,31 +122,22 @@ const UpdatePaymentByRefAndIdService = async (
             status = "paid"
             paid_at = now
         */
-    const { data: updateData, error: updateError } = await supabaseAdmin
-      .from('payments')
-      .update({
+    const [updateData] = await db
+      .update(payments)
+      .set({
         status: 'paid',
-        paid_at: new Date().toISOString(),
+        paidAt: new Date().toISOString(),
       })
-      .eq('id', payment_id)
-      .neq('status', 'paid')
-      .eq('reference', reference)
-      .select('id')
-      .maybeSingle();
-
-    if (updateError) {
-      paymentLogs.error('Error updating payment details', {
-        error: updateError,
-        reference: reference,
-        payment_id: payment_id,
+      .where(
+        and(
+          eq(payments.id, payment_id),
+          eq(payments.reference, reference),
+          or(isNull(payments.status), ne(payments.status, 'paid')),
+        ),
+      )
+      .returning({
+        id: payments.id,
       });
-      return errorResponseHelper(
-        'Error updating payment details',
-        'PAYMENT_UPDATE_ERROR',
-        'Error updating payment details',
-        updateError,
-      );
-    }
 
     if (!updateData) {
       paymentLogs.info('Payment already processed', {

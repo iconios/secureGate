@@ -167,14 +167,15 @@ const ResendVerificationCodeManagerService = async (email: ResendVerificationCod
       await sendVerificationEmail(userEmail, newVerificationCode, user.fullName ?? '');
 
       // Step 7: Return a success response indicating that the verification code has been resent
-      managerLogs.info(
-        'Verification code resent successfully to email', {
-          email: redactEmailUsername(userEmail)
-        }
-      );
-      return successResponseHelper('If this account requires verification, a verification code has been sent.', { 
-        email: userEmail 
+      managerLogs.info('Verification code resent successfully to email', {
+        email: redactEmailUsername(userEmail),
       });
+      return successResponseHelper(
+        'If this account requires verification, a verification code has been sent.',
+        {
+          email: userEmail,
+        },
+      );
     } else {
       await db.insert(emailVerificationRequests).values({
         email: userEmail,
@@ -199,11 +200,14 @@ const ResendVerificationCodeManagerService = async (email: ResendVerificationCod
       managerLogs.info(
         `Verification code sent successfully to email: ${redactEmailUsername(userEmail)}`,
       );
-      return successResponseHelper('If this account requires verification, a verification code has been sent.', { email: userEmail });
+      return successResponseHelper(
+        'If this account requires verification, a verification code has been sent.',
+        { email: userEmail },
+      );
     }
   } catch (error) {
     managerLogs.error('An unexpected error occurred while resending verification code.', {
-      email: userEmail ?  redactEmailUsername(userEmail) : undefined,
+      email: userEmail ? redactEmailUsername(userEmail) : undefined,
       error,
     });
 

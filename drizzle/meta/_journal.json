@@ -15,6 +15,13 @@
       "when": 1781469086309,
       "tag": "0001_quick_darkhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781796079964,
+      "tag": "0002_overjoyed_scream",
+      "breakpoints": true
     }
   ]
 }

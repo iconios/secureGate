@@ -141,16 +141,13 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
         windowExpiresAt > now &&
         recentRequests?.sent_count >= maxSendsPerWindow
       ) {
-        managerLogs.warn(
-          'Verification email resend attempt exceeding window limit for email',
-          {
-            email: redactEmailUsername(email),
-            full_name,
-            phone: maskPhone(phone),
-            sent_count: recentRequests?.sent_count,
-            window_expires_at: recentRequests?.window_expires_at?.toISOString(),
-          },
-        );
+        managerLogs.warn('Verification email resend attempt exceeding window limit for email', {
+          email: redactEmailUsername(email),
+          full_name,
+          phone: maskPhone(phone),
+          sent_count: recentRequests?.sent_count,
+          window_expires_at: recentRequests?.window_expires_at?.toISOString(),
+        });
         return errorResponseHelper(
           'Too many attempts',
           'TOO_MANY_ATTEMPTS',
@@ -267,15 +264,12 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
           .single();
 
         if (insertRequestError) {
-          managerLogs.error(
-            'Database error while creating verification request for email',
-            {
-              email: redactEmailUsername(email),
-              full_name,
-              phone: maskPhone(phone),
-              error: insertRequestError,
-            },
-          );
+          managerLogs.error('Database error while creating verification request for email', {
+            email: redactEmailUsername(email),
+            full_name,
+            phone: maskPhone(phone),
+            error: insertRequestError,
+          });
           return errorResponseHelper(
             'Database error',
             'DATABASE_ERROR',

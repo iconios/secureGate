@@ -33,7 +33,7 @@ const ResendVerificationCodeManagerController = async (req: Request, res: Respon
     }
 
     // Step 2. Pass the validated data to the ResendVerificationCodeManagerService
-    const result = await ResendVerificationCodeManagerService({email});
+    const result = await ResendVerificationCodeManagerService({ email });
 
     // Step 3. Handle the response from the service and send appropriate HTTP response
     if (!result.success) {

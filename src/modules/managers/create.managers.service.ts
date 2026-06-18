@@ -33,6 +33,7 @@ import { randomUUID } from 'crypto';
 import { maskPhone } from '../../utils/maskPhoneHelper.js';
 import { successResponseHelper } from '../../utils/successResponseHelper.js';
 import { generateUniqueCode } from '../../utils/codeGenHelper.js';
+import { redactEmailUsername } from '../../utils/redactEmailUsername.js';
 
 const CreateManagerService = async (newManagerData: NewManagerData) => {
   const now = new Date();
@@ -60,7 +61,8 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
       .maybeSingle();
 
     if (fetchError) {
-      managerLogs.error(`Database error while checking existing manager for email: ${email}`, {
+      managerLogs.error('Database error while checking existing manager for email', {
+        email: redactEmailUsername(email),
         full_name,
         phone: maskPhone(phone),
         error: fetchError,
@@ -140,8 +142,9 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
         recentRequests?.sent_count >= maxSendsPerWindow
       ) {
         managerLogs.warn(
-          `Verification email resend attempt exceeding window limit for email: ${email}`,
+          'Verification email resend attempt exceeding window limit for email',
           {
+            email: redactEmailUsername(email),
             full_name,
             phone: maskPhone(phone),
             sent_count: recentRequests?.sent_count,
@@ -157,7 +160,8 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
 
       // dont resend verification email if cooldown disallows.
       if (nextAllowedAt && nextAllowedAt > now) {
-        managerLogs.warn(`Verification email resend attempt during cooldown for email: ${email}`, {
+        managerLogs.warn('Verification email resend attempt during cooldown for email', {
+          email: redactEmailUsername(email),
           full_name,
           phone: maskPhone(phone),
           next_allowed_at: nextAllowedAt.toISOString(),
@@ -191,7 +195,8 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
         }
         await sendVerificationEmail(email, rawCode, full_name);
 
-        managerLogs.info(`Resent verification email during new window for email: ${email}`, {
+        managerLogs.info('Resent verification email during new window for email', {
+          email: redactEmailUsername(email),
           full_name,
           phone: maskPhone(phone),
           sent_count: 1,
@@ -263,8 +268,9 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
 
         if (insertRequestError) {
           managerLogs.error(
-            `Database error while creating verification request for email: ${email}`,
+            'Database error while creating verification request for email',
             {
+              email: redactEmailUsername(email),
               full_name,
               phone: maskPhone(phone),
               error: insertRequestError,
@@ -284,8 +290,9 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
         await sendVerificationEmail(email, rawCode, full_name);
 
         managerLogs.info(
-          `Sent first verification email for unverified existing manager with email: ${email}`,
+          'Sent first verification email for unverified existing manager with email',
           {
+            email: redactEmailUsername(email),
             full_name,
             phone: maskPhone(phone),
             sent_count: 1,
@@ -311,7 +318,8 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
       .single();
 
     if (insertError) {
-      managerLogs.error(`Database error while creating manager for email: ${email}`, {
+      managerLogs.error('Database error while creating manager for email', {
+        email: redactEmailUsername(email),
         full_name,
         phone: maskPhone(phone),
         error: insertError,
@@ -345,7 +353,8 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
       .single();
 
     if (codeInsertError) {
-      managerLogs.error(`Database error while creating verification code for email: ${email}`, {
+      managerLogs.error('Database error while creating verification code for email', {
+        email: redactEmailUsername(email),
         full_name,
         phone: maskPhone(phone),
         error: codeInsertError,
@@ -358,7 +367,8 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
         .eq('is_verified', false);
 
       if (deleteManagerError) {
-        managerLogs.error(`Database error while deleting unverified manager for email: ${email}`, {
+        managerLogs.error('Database error while deleting unverified manager for email', {
+          email: redactEmailUsername(email),
           full_name,
           phone: maskPhone(phone),
           error: deleteManagerError,
@@ -374,7 +384,8 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
     }
 
     // 6. Send verification email
-    managerLogs.info(`Sending verification email for new manager with email: ${email}`, {
+    managerLogs.info('Sending verification email for new manager with email', {
+      email: redactEmailUsername(email),
       full_name,
       phone: maskPhone(phone),
     });

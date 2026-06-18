@@ -27,9 +27,9 @@ import { emailVerificationRequests } from '../../db/schema/emailVerificationRequ
 #Plan:
 1. Accept and validate the email for the request
 2. Find the user in the database using the provided email
-3. If the user is not found, return an error response
+3: If the user is not found or already verified, return a success response
 4. If the user is found, generate a new verification code
-5. Update the user's record in the database with the new verification code
+5: Update the user's emailVerificationRequests record in the database with the new verification code
 6. Send the new verification code to the user's email
 7. Return a success response indicating that the verification code has been resent
 */
@@ -40,13 +40,15 @@ const ResendVerificationCodeManagerService = async (email: ResendVerificationCod
     userAccountSettings();
 
   const managerLogs = logger.child({
-    service: 'resendVerificationCodeManagerService',
+    service: 'ResendVerificationCodeManagerService',
     requestId: randomUUID(),
   });
 
+  let userEmail: string | undefined;
   try {
     // Step 1: Accept and validate the email for the request
-    const { email: userEmail } = ResendVerificationCodeDataSchema.parse(email);
+    const parsed = ResendVerificationCodeDataSchema.parse(email);
+    userEmail = parsed.email;
 
     // Step 2: Find the user in the database using the provided email
     const manager = await db
@@ -62,14 +64,12 @@ const ResendVerificationCodeManagerService = async (email: ResendVerificationCod
 
     const user = manager[0];
     if (!user) {
-      // Step 3: If the user is not found, return an error response
-      managerLogs.error(`User not found with email`, {
+      // Step 3: If the user is not found or already verified, return a success response
+      managerLogs.warn('Verification resend requested for non-existing manager.', {
         email: redactEmailUsername(userEmail),
       });
-      return errorResponseHelper(
-        'User not found with the provided email.',
-        'USER_NOT_FOUND',
-        'User not found with the provided email.',
+      return successResponseHelper(
+        'If this account requires verification, a verification code has been sent.',
       );
     }
 
@@ -83,7 +83,7 @@ const ResendVerificationCodeManagerService = async (email: ResendVerificationCod
     const newVerificationCode = generateUniqueCode();
     const hashedVerificationCode = await hashString(newVerificationCode);
 
-    // Step 5: Update the user's record in the database with the new verification code
+    // Step 5: Update the user's emailVerificationRequests record in the database with the new verification code
     const request = await db
       .select({
         id: emailVerificationRequests.id,
@@ -104,7 +104,6 @@ const ResendVerificationCodeManagerService = async (email: ResendVerificationCod
       .limit(1);
 
     const existingRequest = request[0];
-
     if (existingRequest) {
       const {
         sentCount,
@@ -141,14 +140,8 @@ const ResendVerificationCodeManagerService = async (email: ResendVerificationCod
       }
 
       const windowExpiresAt = WindowWillExpireAt ? new Date(WindowWillExpireAt) : null;
-
       const isWindowExpired = !windowExpiresAt || now >= windowExpiresAt;
-      let nextSentCount = 0;
-      if (isWindowExpired) {
-        nextSentCount = 1;
-      } else if (sentCount) {
-        nextSentCount = sentCount + 1;
-      }
+      const nextSentCount = isWindowExpired ? 1 : (sentCount ?? 0) + 1;
       const nextWindowStartedAt = isWindowExpired ? now.toISOString() : windowStartedAt;
       const nextWindowExpiresAt = isWindowExpired
         ? new Date(now.getTime() + windowMinutes * 60 * 1000).toISOString()
@@ -175,9 +168,13 @@ const ResendVerificationCodeManagerService = async (email: ResendVerificationCod
 
       // Step 7: Return a success response indicating that the verification code has been resent
       managerLogs.info(
-        `Verification code resent successfully to email: ${redactEmailUsername(userEmail)}`,
+        'Verification code resent successfully to email', {
+          email: redactEmailUsername(userEmail)
+        }
       );
-      return successResponseHelper('Verification code resent successfully.', { email: userEmail });
+      return successResponseHelper('If this account requires verification, a verification code has been sent.', { 
+        email: userEmail 
+      });
     } else {
       await db.insert(emailVerificationRequests).values({
         email: userEmail,
@@ -202,11 +199,11 @@ const ResendVerificationCodeManagerService = async (email: ResendVerificationCod
       managerLogs.info(
         `Verification code sent successfully to email: ${redactEmailUsername(userEmail)}`,
       );
-      return successResponseHelper('Verification code sent successfully.', { email: userEmail });
+      return successResponseHelper('If this account requires verification, a verification code has been sent.', { email: userEmail });
     }
   } catch (error) {
     managerLogs.error('An unexpected error occurred while resending verification code.', {
-      email,
+      email: userEmail ?  redactEmailUsername(userEmail) : undefined,
       error,
     });
 

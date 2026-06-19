@@ -1,0 +1,1 @@
+ALTER TABLE "configuration_keys" ADD CONSTRAINT "configuration_keys_key_unique" UNIQUE("key");

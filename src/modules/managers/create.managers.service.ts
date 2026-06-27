@@ -14,17 +14,16 @@ Plan:
     resend verification email if no email-based rate limit is hit.
     Log every attempt and outcome
     return generic success response
-4. Create new manager account
-5. Generate and store hashed verification code with expiry in database.
-6. Send verification email
-7. Log the outcome
-8. Return generic success response
+4. Call transaction:
+    Generate and store hashed verification code with expiry in database.
+    Create new manager account
+5. Send verification email
+6. Return generic success response
 */
 
 import { ZodError } from 'zod';
 import { userAccountSettings } from '../../common/configs.js';
 import sendVerificationEmail from '../../common/postmark/verificationEmail.js';
-import { supabaseAdmin } from '../../common/supabase/supabase.js';
 import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
 import { hashString } from '../../utils/hashHelper.js';
 import { NewManagerData, NewManagerDataSchema } from './managers.types.js';
@@ -34,6 +33,10 @@ import { maskPhone } from '../../utils/maskPhoneHelper.js';
 import { successResponseHelper } from '../../utils/successResponseHelper.js';
 import { generateUniqueCode } from '../../utils/codeGenHelper.js';
 import { redactEmailUsername } from '../../utils/redactEmailUsername.js';
+import db from '../../db/index.js';
+import { managers } from '../../db/schema/managers.js';
+import { and, desc, eq } from 'drizzle-orm';
+import { emailVerificationRequests } from '../../db/schema/emailVerificationRequests.js';
 
 const CreateManagerService = async (newManagerData: NewManagerData) => {
   const now = new Date();
@@ -54,33 +57,21 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
     //      if exists and verified
     //      Log every attempt and outcome
     //      return a safe existing-account response.
-    const { data: existingManager, error: fetchError } = await supabaseAdmin
-      .from('managers')
-      .select('is_verified')
-      .eq('email', email)
-      .maybeSingle();
 
-    if (fetchError) {
-      managerLogs.error('Database error while checking existing manager for email', {
+    const [existingManager] = await db
+      .select({
+        isVerified: managers.isVerified,
+      })
+      .from(managers)
+      .where(eq(managers.email, email))
+      .limit(1);
+
+    if (existingManager?.isVerified === true) {
+      // Log the attempt and outcome
+      managerLogs.warn('Manager account already exists for new manager creation request', {
         email: redactEmailUsername(email),
         full_name,
         phone: maskPhone(phone),
-        error: fetchError,
-      });
-      return errorResponseHelper(
-        'Database error',
-        'DATABASE_ERROR',
-        'Error fetching manager from database',
-        fetchError,
-      );
-    }
-
-    if (existingManager?.is_verified) {
-      // Log the attempt and outcome
-      managerLogs.info(`Attempt to register with email: ${email}`, {
-        full_name,
-        phone: maskPhone(phone),
-        outcome: 'email_in_use',
       });
 
       //  return a safe existing-account response.
@@ -100,53 +91,44 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
     // Log every attempt and outcome
     // return generic success response
 
-    if (existingManager && !existingManager?.is_verified) {
+    if (
+      existingManager &&
+      (existingManager.isVerified === false || existingManager.isVerified === null)
+    ) {
       // apply email-based rate limit / reset cooldown
-      const { data: recentRequests, error: recentRequestsError } = await supabaseAdmin
-        .from('email_verification_requests')
-        .select('id, next_allowed_at, window_expires_at, sent_count')
-        .eq('email', email)
-        .eq('purpose', 'account_registration')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (recentRequestsError) {
-        managerLogs.error(
-          `Database error while checking verification requests for email: ${email}`,
-          {
-            full_name,
-            phone: maskPhone(phone),
-            error: recentRequestsError,
-          },
-        );
-        return errorResponseHelper(
-          'Database error',
-          'DATABASE_ERROR',
-          'Error fetching recent verification requests from database',
-          recentRequestsError,
-        );
-      }
+      const [recentRequests] = await db
+        .select({
+          id: emailVerificationRequests.id,
+          nextAllowedAt: emailVerificationRequests.nextAllowedAt,
+          windowExpiresAt: emailVerificationRequests.windowExpiresAt,
+          sentCount: emailVerificationRequests.sentCount,
+        })
+        .from(emailVerificationRequests)
+        .where(
+          and(
+            eq(emailVerificationRequests.email, email),
+            eq(emailVerificationRequests.purpose, 'account_registration'),
+            eq(emailVerificationRequests.status, 'pending'),
+          ),
+        )
+        .orderBy(desc(emailVerificationRequests.createdAt))
+        .limit(1);
 
       // don't resend verification email if window disallows and max sends reached.
-      const windowExpiresAt = recentRequests?.window_expires_at
-        ? new Date(recentRequests.window_expires_at)
+      const windowExpiresAt = recentRequests?.windowExpiresAt
+        ? new Date(recentRequests.windowExpiresAt)
         : null;
-      const nextAllowedAt = recentRequests?.next_allowed_at
-        ? new Date(recentRequests.next_allowed_at)
+      const nextAllowedAt = recentRequests?.nextAllowedAt
+        ? new Date(recentRequests.nextAllowedAt)
         : null;
-      if (
-        windowExpiresAt &&
-        windowExpiresAt > now &&
-        recentRequests?.sent_count >= maxSendsPerWindow
-      ) {
+      const safeSentCount = recentRequests?.sentCount ?? 0;
+      if (windowExpiresAt && windowExpiresAt > now && safeSentCount >= maxSendsPerWindow) {
         managerLogs.warn('Verification email resend attempt exceeding window limit for email', {
           email: redactEmailUsername(email),
           full_name,
           phone: maskPhone(phone),
-          sent_count: recentRequests?.sent_count,
-          window_expires_at: recentRequests?.window_expires_at?.toISOString(),
+          sent_count: recentRequests?.sentCount,
+          window_expires_at: recentRequests?.windowExpiresAt,
         });
         return errorResponseHelper(
           'Too many attempts',
@@ -171,21 +153,36 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
       }
 
       // resend verification email if window allows and max sends not reached.
-      if (recentRequests?.window_expires_at && recentRequests.window_expires_at < now) {
+      if (recentRequests && (!windowExpiresAt || windowExpiresAt <= now)) {
         const rawCode = generateUniqueCode();
         const newHashedCode = await hashString(rawCode);
-        await supabaseAdmin
-          .from('email_verification_requests')
-          .update({
-            sent_count: 1,
-            code_hash: newHashedCode,
-            code_expires_at: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000),
-            next_allowed_at: new Date(now.getTime() + cooldownMinutes * 60 * 1000),
-            window_started_at: now,
-            window_expires_at: new Date(now.getTime() + windowMinutes * 60 * 1000),
+        const [updatedRequest] = await db
+          .update(emailVerificationRequests)
+          .set({
+            sentCount: 1,
+            codeHash: newHashedCode,
+            codeExpiresAt: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000).toISOString(),
+            nextAllowedAt: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
+            windowStartedAt: now.toISOString(),
+            windowExpiresAt: new Date(now.getTime() + windowMinutes * 60 * 1000).toISOString(),
             status: 'pending',
           })
-          .eq('id', recentRequests.id);
+          .where(eq(emailVerificationRequests.id, recentRequests.id))
+          .returning({
+            id: emailVerificationRequests.id
+          });
+
+        if (!updatedRequest) {
+          managerLogs.warn('Unable to update verification request while creating manager account', {
+            email: redactEmailUsername(email),
+            phone: maskPhone(phone),
+          })
+          return errorResponseHelper(
+            'Unable to resend verification email',
+            'VERIFICATION_REQUEST_UPDATE_FAILED',
+            'Unable to resend verification email. Please try again later.',
+          );
+        }
 
         if (isDev) {
           console.log('Generated raw code for resending verification email:', rawCode); // Debug log to verify code generation
@@ -199,7 +196,7 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
           sent_count: 1,
         });
         return successResponseHelper(
-          'A new verification code has been sent your email. Please check your inbox.',
+          'A new verification code has been sent to your email. Please check your inbox.',
         );
       }
 
@@ -209,30 +206,21 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
         windowExpiresAt &&
         windowExpiresAt > now &&
         (!nextAllowedAt || nextAllowedAt <= now) &&
-        recentRequests.sent_count < maxSendsPerWindow
+        safeSentCount < maxSendsPerWindow
       ) {
         const rawCode = generateUniqueCode();
         const codeHash = await hashString(rawCode);
 
-        const { error: updateError } = await supabaseAdmin
-          .from('email_verification_requests')
-          .update({
-            sent_count: recentRequests.sent_count + 1,
-            code_hash: codeHash,
-            code_expires_at: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000).toISOString(),
-            next_allowed_at: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
+        await db
+          .update(emailVerificationRequests)
+          .set({
+            sentCount: safeSentCount + 1,
+            codeHash: codeHash,
+            codeExpiresAt: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000).toISOString(),
+            nextAllowedAt: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
             status: 'pending',
           })
-          .eq('id', recentRequests.id);
-
-        if (updateError) {
-          return errorResponseHelper(
-            'Database error',
-            'DATABASE_ERROR',
-            'Error updating verification request',
-            updateError,
-          );
-        }
+          .where(eq(emailVerificationRequests.id, recentRequests.id));
 
         if (isDev) {
           console.log('Generated raw code for resending verification email:', rawCode); // Debug log to verify code generation
@@ -248,35 +236,18 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
       if (!recentRequests) {
         const rawCode = generateUniqueCode();
         const newHashedCode = await hashString(rawCode);
-        const { error: insertRequestError } = await supabaseAdmin
-          .from('email_verification_requests')
-          .insert({
+        await db
+          .insert(emailVerificationRequests)
+          .values({
             email,
             purpose: 'account_registration',
-            code_hash: newHashedCode,
-            sent_count: 1,
-            code_expires_at: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000),
-            next_allowed_at: new Date(now.getTime() + cooldownMinutes * 60 * 1000),
-            window_started_at: now,
-            window_expires_at: new Date(now.getTime() + windowMinutes * 60 * 1000),
-          })
-          .select('id')
-          .single();
-
-        if (insertRequestError) {
-          managerLogs.error('Database error while creating verification request for email', {
-            email: redactEmailUsername(email),
-            full_name,
-            phone: maskPhone(phone),
-            error: insertRequestError,
+            codeHash: newHashedCode,
+            sentCount: 1,
+            codeExpiresAt: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000).toISOString(),
+            nextAllowedAt: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
+            windowStartedAt: now.toISOString(),
+            windowExpiresAt: new Date(now.getTime() + windowMinutes * 60 * 1000).toISOString(),
           });
-          return errorResponseHelper(
-            'Database error',
-            'DATABASE_ERROR',
-            'Error creating verification request record',
-            insertRequestError,
-          );
-        }
 
         if (isDev) {
           console.log('Generated raw code for new manager:', rawCode); // Debug log to verify code generation
@@ -298,86 +269,37 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
       }
     }
 
-    // 4. Create new manager account
+    // 4. Call transaction:
+    // Generate and store hashed verification code with expiry in database.
+    // Create new manager account
     const passwordHash = await hashString(password);
-    const { error: insertError } = await supabaseAdmin
-      .from('managers')
-      .insert({
-        email,
-        full_name,
-        phone,
-        password_hash: passwordHash,
-      })
-      .select('id')
-      .single();
-
-    if (insertError) {
-      managerLogs.error('Database error while creating manager for email', {
-        email: redactEmailUsername(email),
-        full_name,
-        phone: maskPhone(phone),
-        error: insertError,
-      });
-      return errorResponseHelper(
-        'Database error',
-        'DATABASE_ERROR',
-        'Error inserting new manager into database',
-        insertError,
-      );
-    }
-
-    // 5. Generate and store hashed verification code with expiry.
     const rawCode = generateUniqueCode();
     const codeHash = await hashString(rawCode);
     const codeExpiry = new Date(now.getTime() + codeExpiryMinutes * 60 * 1000);
-    const { error: codeInsertError } = await supabaseAdmin
-      .from('email_verification_requests')
-      .insert({
-        email,
-        purpose: 'account_registration',
-        code_hash: codeHash,
-        code_expires_at: codeExpiry,
-        status: 'pending',
-        sent_count: 1,
-        next_allowed_at: new Date(now.getTime() + cooldownMinutes * 60 * 1000),
-        window_started_at: now,
-        window_expires_at: new Date(now.getTime() + windowMinutes * 60 * 1000),
-      })
-      .select('id')
-      .single();
 
-    if (codeInsertError) {
-      managerLogs.error('Database error while creating verification code for email', {
-        email: redactEmailUsername(email),
-        full_name,
-        phone: maskPhone(phone),
-        error: codeInsertError,
+    await db.transaction(async (tx) => {
+      await tx.insert(managers).values({
+        email,
+        fullName: full_name,
+        phone,
+        passwordHash,
+        isVerified: false
       });
 
-      const { error: deleteManagerError } = await supabaseAdmin
-        .from('managers')
-        .delete()
-        .eq('email', email)
-        .eq('is_verified', false);
+      await tx.insert(emailVerificationRequests).values({
+        email,
+        purpose: 'account_registration',
+        codeHash,
+        codeExpiresAt: codeExpiry.toISOString(),
+        status: 'pending',
+        sentCount: 1,
+        nextAllowedAt: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
+        windowStartedAt: now.toISOString(),
+        windowExpiresAt: new Date(now.getTime() + windowMinutes * 60 * 1000).toISOString(),
+      });
+    });
 
-      if (deleteManagerError) {
-        managerLogs.error('Database error while deleting unverified manager for email', {
-          email: redactEmailUsername(email),
-          full_name,
-          phone: maskPhone(phone),
-          error: deleteManagerError,
-        });
-      }
-
-      return errorResponseHelper(
-        'Database error',
-        'DATABASE_ERROR',
-        'Error inserting verification code into database',
-        codeInsertError,
-      );
-    }
-
-    // 6. Send verification email
+    // 5. Send verification email
     managerLogs.info('Sending verification email for new manager with email', {
       email: redactEmailUsername(email),
       full_name,
@@ -386,9 +308,23 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
     if (isDev) {
       console.log('Generated raw code for new manager:', rawCode); // Debug log to verify code generation
     }
-    await sendVerificationEmail(email, rawCode, full_name);
+    
+    const emailSentResult = await sendVerificationEmail(email, rawCode, full_name);
+    if (!emailSentResult.success) {
+      managerLogs.error('Manager created but verification email failed to send', {
+        email: redactEmailUsername(email),
+        full_name,
+        phone: maskPhone(phone),
+      });
 
-    // 7. Return generic success response
+      return errorResponseHelper(
+        'Unable to send verification email',
+        'VERIFICATION_EMAIL_SEND_FAILED',
+        'Your account was created, but we could not send the verification email. Please try resending the verification code.',
+      );
+    }
+
+    // 6. Return generic success response
     return successResponseHelper(
       'Manager account created successfully. Please check your email to verify your account.',
     );

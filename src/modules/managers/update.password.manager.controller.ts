@@ -20,8 +20,7 @@ const UpdatePasswordManagerController = async (req: Request, res: Response) => {
 
   try {
     // Step 1. Accept and validate the password update data
-    const { request_id, token } = req.query;
-    const { password } = req.body;
+    const { password, request_id, token } = req.body;
 
     if (!request_id || !token || !password) {
       managerLogs.warn('Missing required fields');

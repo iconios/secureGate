@@ -1,6 +1,6 @@
 {
-  "id": "23c098f0-7f80-461d-8691-263b9d6638e6",
-  "prevId": "d25bbee6-f9e8-4aa8-87bf-2741ab3979cd",
+  "id": "fc7eaad1-3d0a-476b-a907-d190dc0ed2f0",
+  "prevId": "4c70c490-4a6a-44b4-88a4-74940627987e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -89,7 +89,7 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.configuration_keys": {
       "name": "configuration_keys",
@@ -141,12 +141,14 @@
         "configuration_keys_key_unique": {
           "name": "configuration_keys_key_unique",
           "nullsNotDistinct": false,
-          "columns": ["key"]
+          "columns": [
+            "key"
+          ]
         }
       },
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.email_verification_requests": {
       "name": "email_verification_requests",
@@ -258,7 +260,7 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.estate_managers": {
       "name": "estate_managers",
@@ -297,8 +299,12 @@
           "name": "estate_managers_estate_id_fkey",
           "tableFrom": "estate_managers",
           "tableTo": "estates",
-          "columnsFrom": ["estate_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "estate_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -306,8 +312,12 @@
           "name": "estate_managers_manager_id_fkey",
           "tableFrom": "estate_managers",
           "tableTo": "managers",
-          "columnsFrom": ["manager_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "manager_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -316,7 +326,7 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.estates": {
       "name": "estates",
@@ -405,8 +415,12 @@
           "name": "estates_payment_id_fkey",
           "tableFrom": "estates",
           "tableTo": "payments",
-          "columnsFrom": ["payment_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "payment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -414,8 +428,12 @@
           "name": "estates_plan_id_fkey",
           "tableFrom": "estates",
           "tableTo": "subscription_plans",
-          "columnsFrom": ["plan_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "plan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -424,7 +442,7 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.managers": {
       "name": "managers",
@@ -448,7 +466,7 @@
           "name": "full_name",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "email": {
           "name": "email",
@@ -498,15 +516,24 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
+        "managers_email_unique": {
+          "name": "managers_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        },
         "managers_email_key": {
           "name": "managers_email_key",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         }
       },
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.payments": {
       "name": "payments",
@@ -643,8 +670,12 @@
           "name": "payments_paid_by_fkey",
           "tableFrom": "payments",
           "tableTo": "managers",
-          "columnsFrom": ["paid_by"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "paid_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -652,8 +683,12 @@
           "name": "payments_plan_id_fkey",
           "tableFrom": "payments",
           "tableTo": "subscription_plans",
-          "columnsFrom": ["plan_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "plan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -663,12 +698,14 @@
         "payments_gateway_reference_key": {
           "name": "payments_gateway_reference_key",
           "nullsNotDistinct": false,
-          "columns": ["reference"]
+          "columns": [
+            "reference"
+          ]
         }
       },
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.subscription_plans": {
       "name": "subscription_plans",
@@ -744,14 +781,20 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     }
   },
   "enums": {
     "public.estate_status": {
       "name": "estate_status",
       "schema": "public",
-      "values": ["pending", "active", "inactive", "expired", "pending_payment"]
+      "values": [
+        "pending",
+        "active",
+        "inactive",
+        "expired",
+        "pending_payment"
+      ]
     }
   },
   "schemas": {},

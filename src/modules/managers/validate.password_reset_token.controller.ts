@@ -13,9 +13,9 @@ import { join, dirname } from 'path';
 import logger from '../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const passwordResetFormPath = join(__dirname, '../../../common/postmark/passwordResetForm.htm');
+const passwordResetFormPath = join(__dirname, '../../../src/common/postmark/passwordResetForm.htm');
 
-const expiredTokenPath = join(__dirname, '../../../common/postmark/expiredToken.htm');
+const expiredTokenPath = join(__dirname, '../../../src/common/postmark/expiredToken.htm');
 
 const ValidatePasswordResetTokenManagerController = async (req: Request, res: Response) => {
   const managerLogs = logger.child({

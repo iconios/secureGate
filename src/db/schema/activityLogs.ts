@@ -13,4 +13,4 @@ export const activityLogs = pgTable('activity_logs', {
   entityType: text('entity_type'),
   residentId: uuid('resident_id'),
   guardId: uuid('guard_id'),
-});
+}).enableRLS();

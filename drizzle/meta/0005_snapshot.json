@@ -1,6 +1,6 @@
 {
-  "id": "23c098f0-7f80-461d-8691-263b9d6638e6",
-  "prevId": "d25bbee6-f9e8-4aa8-87bf-2741ab3979cd",
+  "id": "4c70c490-4a6a-44b4-88a4-74940627987e",
+  "prevId": "47998289-3c68-43a2-9338-dc018c4f5464",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -89,7 +89,7 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.configuration_keys": {
       "name": "configuration_keys",
@@ -146,7 +146,7 @@
       },
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.email_verification_requests": {
       "name": "email_verification_requests",
@@ -258,7 +258,7 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.estate_managers": {
       "name": "estate_managers",
@@ -316,7 +316,7 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.estates": {
       "name": "estates",
@@ -424,7 +424,7 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.managers": {
       "name": "managers",
@@ -448,7 +448,7 @@
           "name": "full_name",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "email": {
           "name": "email",
@@ -506,7 +506,7 @@
       },
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.payments": {
       "name": "payments",
@@ -668,7 +668,7 @@
       },
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.subscription_plans": {
       "name": "subscription_plans",
@@ -744,7 +744,7 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     }
   },
   "enums": {

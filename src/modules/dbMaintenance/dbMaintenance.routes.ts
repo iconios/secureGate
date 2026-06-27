@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { UnpaidEstateAndPaymentEntriesDeletionController } from './unpaidEstateAndPaymentDeletioController.js';
+import { UnpaidEstateAndPaymentEntriesDeletionController } from './dbMaintenanceController.js';
 
 export const dbMaintenanceRouter = Router();
 

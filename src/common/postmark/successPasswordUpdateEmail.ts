@@ -1,10 +1,19 @@
+import { randomUUID } from 'crypto';
+import logger from '../winston/logger.js';
 import { transporter } from './mailer.js';
+import { redactEmailUsername } from '../../utils/redactEmailUsername.js';
+import { successResponseHelper } from '../../utils/successResponseHelper.js';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
 
 const sendPasswordUpdateSuccessfulEmail = async (
   email: string,
   fullName: string,
   dateTime: Date,
 ) => {
+  const emailLogs = logger.child({
+    service: 'sendPasswordUpdateSuccessfulEmail',
+    requestId: randomUUID(),
+  });
   const fromAddress = `"${process.env.APP_NAME}" <${process.env.MAIL_FROM}>`;
   const mailOptions = {
     From: fromAddress,
@@ -31,9 +40,20 @@ const sendPasswordUpdateSuccessfulEmail = async (
   // Send the password update successful email
   try {
     await transporter.sendEmail(mailOptions);
-    console.log('Password update successful email sent to', email);
+    emailLogs.info('Password update successful email sent', {
+      email: redactEmailUsername(email),
+    });
+    return successResponseHelper('Password update successful email sent', {
+      email: redactEmailUsername(email),
+    });
   } catch (error) {
-    console.log('Error sending password update successful email', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Error sending password update email';
+    emailLogs.error(errorMessage, {
+      email: redactEmailUsername(email),
+      error,
+    });
+    return errorResponseHelper(errorMessage, 'EMAIL_SEND_ERROR', errorMessage);
   }
 };
 

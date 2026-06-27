@@ -1,6 +1,16 @@
+import { randomUUID } from 'crypto';
+import logger from '../winston/logger.js';
 import { transporter } from './mailer.js';
+import { redactEmailUsername } from '../../utils/redactEmailUsername.js';
+import { successResponseHelper } from '../../utils/successResponseHelper.js';
+import { errorResponseHelper } from '../../utils/errorResponseHelper.js';
 
 const sendVerificationEmail = async (email: string, code: string, fullName: string) => {
+  const emailLogs = logger.child({
+    service: 'sendVerificationEmail',
+    requestId: randomUUID(),
+  });
+
   const fromAddress = `"${process.env.APP_NAME}" <${process.env.MAIL_FROM}>`;
   const mailOptions = {
     From: fromAddress,
@@ -24,9 +34,20 @@ const sendVerificationEmail = async (email: string, code: string, fullName: stri
   // Send verification email
   try {
     await transporter.sendEmail(mailOptions);
-    console.log('Verification email sent to', email);
+    emailLogs.info('Verification email sent', {
+      email: redactEmailUsername(email),
+    });
+    return successResponseHelper('Verification email sent', {
+      email: redactEmailUsername(email),
+    });
   } catch (error) {
-    console.log('Error sending verification email', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Error sending verification email';
+    emailLogs.error(errorMessage, {
+      email: redactEmailUsername(email),
+      error,
+    });
+    return errorResponseHelper(errorMessage, 'EMAIL_SEND_ERROR', errorMessage);
   }
 };
 

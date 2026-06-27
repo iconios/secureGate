@@ -49,14 +49,14 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
 
     const manager = managerData[0];
     if (!manager) {
-      managerLogs.error('Invalid email or password', {
+      managerLogs.warn('Invalid email or password', {
         email: redactEmailUsername(email),
       });
 
       return errorResponseHelper(
         'Invalid email or password',
         'INVALID_CREDENTIALS',
-        'Invalid credentials provided',
+        'Invalid email or password',
       );
     }
 
@@ -74,7 +74,7 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
     // 3. Verify the password
     const isPasswordValid = await compareString(password, manager.password_hash!);
     if (!isPasswordValid) {
-      managerLogs.error('Invalid email or password', {
+      managerLogs.warn('Invalid email or password', {
         email: redactEmailUsername(manager.manager_email),
       });
 
@@ -104,7 +104,7 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
       .returning();
 
     if (!updatedManager) {
-      managerLogs.error('Error updating manager record while logging in', {
+      managerLogs.warn('Error updating manager record while logging in', {
         email: redactEmailUsername(email),
       });
       return errorResponseHelper(

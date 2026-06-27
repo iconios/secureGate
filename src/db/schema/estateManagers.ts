@@ -25,7 +25,7 @@ export const estateManagers = pgTable(
       name: 'estate_managers_manager_id_fkey',
     }),
   ],
-);
+).enableRLS();
 
 export const estateManagersRelations = relations(estateManagers, ({ one, many }) => ({
   estate: one(estates, {

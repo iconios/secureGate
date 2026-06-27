@@ -16,7 +16,7 @@ ManagerRouter.post('/verify', VerifyManagerController);
 ManagerRouter.post('/login', LoginManagerController);
 ManagerRouter.post('/resend-verification-code', ResendVerificationCodeManagerController);
 ManagerRouter.post('/forgot-password', ForgotPasswordManagerController);
-ManagerRouter.post('validate-password-token', ValidatePasswordResetTokenManagerController);
+ManagerRouter.get('/validate-password-token', ValidatePasswordResetTokenManagerController);
 ManagerRouter.post('/password-update', UpdatePasswordManagerController);
 ManagerRouter.post('resend-verification-code', ResendVerificationCodeManagerController);
 ManagerRouter.post('/info', extractToken, FetchManagerInfoController);

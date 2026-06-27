@@ -37,7 +37,7 @@ export const DeleteUnpaidPaymentEntriesService = async () => {
 
     // 2. Send response to caller
     if (!unpaidPaymentData || unpaidPaymentData.length === 0) {
-      payDeleteLogs.warn('No unpaid or null payment entries found for deletion');
+      payDeleteLogs.info('No unpaid or null payment entries found for deletion');
       return successResponseHelper('No unpaid or null payment entries found for deletion');
     }
 

@@ -52,7 +52,7 @@ export const payments = pgTable(
     }),
     unique('payments_gateway_reference_key').on(table.reference),
   ],
-);
+).enableRLS();
 
 export const paymentsRelations = relations(payments, ({ one, many }) => ({
   estate: one(estates as any, {

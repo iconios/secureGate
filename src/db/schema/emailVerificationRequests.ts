@@ -18,4 +18,4 @@ export const emailVerificationRequests = pgTable('email_verification_requests', 
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }),
-});
+}).enableRLS();

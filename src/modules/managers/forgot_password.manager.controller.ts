@@ -24,7 +24,7 @@ const ForgotPasswordManagerController = async (req: Request, res: Response) => {
     const email = String(req.body.email).trim().toLowerCase();
 
     if (!email) {
-      managerLogs.info('Email field is required for the request');
+      managerLogs.warn('Email field is required for the request');
 
       return res
         .status(400)

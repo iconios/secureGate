@@ -9,8 +9,8 @@ export const managers = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
       .defaultNow()
       .notNull(),
-    fullName: text('full_name'),
-    email: text().notNull(),
+    fullName: text('full_name').notNull(),
+    email: text().notNull().unique(),
     phone: text(),
     passwordHash: text('password_hash'),
     lastLoginAt: timestamp('last_login_at', { withTimezone: true, mode: 'string' }),
@@ -19,7 +19,7 @@ export const managers = pgTable(
     verifiedAt: timestamp('verified_at', { withTimezone: true, mode: 'string' }),
   },
   (table) => [unique('managers_email_key').on(table.email)],
-);
+).enableRLS();
 
 export const managersRelations = relations(managers, ({ many }) => ({
   estateManagers: many(estateManagers),

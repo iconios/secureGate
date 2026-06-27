@@ -7,4 +7,4 @@ export const configurationKeys = pgTable('configuration_keys', {
   description: text(),
   value: text().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }),
-});
+}).enableRLS();

@@ -11,4 +11,4 @@ export const subscriptionPlans = pgTable('subscription_plans', {
   description: text(),
   monthlyFee: numeric('monthly_fee'),
   yearlyFee: numeric('yearly_fee').default('0.00'),
-});
+}).enableRLS();

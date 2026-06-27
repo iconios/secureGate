@@ -80,7 +80,7 @@ export const DeleteUnpaidEstateEntriesService = async () => {
 
     // 5. Send response to caller
     if (unpaidEstateData.length === 0) {
-      estateDeleteLogs.warn('No estate with unpaid payment entry found for deletion');
+      estateDeleteLogs.info('No estate with unpaid payment entry found for deletion');
 
       return successResponseHelper('No estate with unpaid payment entry found for deletion', {
         deletedCount: 0,

@@ -1,0 +1,1 @@
+ALTER TABLE "managers" ALTER COLUMN "full_name" SET NOT NULL;

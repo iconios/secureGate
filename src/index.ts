@@ -16,9 +16,23 @@ import { dbMaintenanceRouter } from './modules/dbMaintenance/dbMaintenance.route
 
 const app = express();
 const PORT = process.env.PORT || 3010;
+const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(cors());
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        connectSrc: ["'self'"],
+        formAction: ["'self'"],
+        upgradeInsecureRequests: isProduction ? [] : null,
+      },
+    },
+  }),
+);
 
 app.post(
   '/api/v1/payments/webhook/paystack',
@@ -28,6 +42,7 @@ app.post(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
 
 app.get('/health', (_, res) => res.send('OK'));
 app.use('/api/v1/managers', ManagerRouter);

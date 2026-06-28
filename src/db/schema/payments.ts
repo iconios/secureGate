@@ -7,6 +7,7 @@ import {
   text,
   numeric,
   jsonb,
+  index,
 } from 'drizzle-orm/pg-core';
 import { estates } from './estates.js';
 import { relations } from 'drizzle-orm/relations';
@@ -51,6 +52,9 @@ export const payments = pgTable(
       name: 'payments_plan_id_fkey',
     }),
     unique('payments_gateway_reference_key').on(table.reference),
+    index('payments_estate_id_idx').on(table.estateId),
+    index('payments_plan_id_idx').on(table.planId),
+    index('payments_paid_by_idx').on(table.paidBy),
   ],
 ).enableRLS();
 

@@ -1,4 +1,4 @@
-import { pgTable, uuid, timestamp, text, smallint } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, timestamp, text, smallint, index } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 export const emailVerificationRequests = pgTable('email_verification_requests', {
@@ -18,4 +18,12 @@ export const emailVerificationRequests = pgTable('email_verification_requests', 
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }),
-}).enableRLS();
+},
+(table) => [
+  index('email_verification_requests_email_code_hash_status_idx').on(
+    table.email,
+    table.codeHash,
+    table.status
+  ),
+]
+).enableRLS();

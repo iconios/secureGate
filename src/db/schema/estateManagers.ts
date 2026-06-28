@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, uuid, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, foreignKey, uuid, timestamp, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm/relations';
 import { estates } from './estates.js';
 import { managers } from './managers.js';
@@ -24,6 +24,8 @@ export const estateManagers = pgTable(
       foreignColumns: [managers.id],
       name: 'estate_managers_manager_id_fkey',
     }),
+    index('estate_managers_manager_id_idx').on(table.managerId),
+    index('estate_managers_estate_id_idx').on(table.estateId),
   ],
 ).enableRLS();
 

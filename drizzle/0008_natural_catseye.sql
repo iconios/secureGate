@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "persons_estate_phone_unique_idx" ON "persons" USING btree ("estate_id",lower("phone"));

@@ -49,7 +49,7 @@ export const residents = pgTable(
       table.householdId,
       table.personId,
       table.delistedAt,
-    )
+    ),
   ],
 ).enableRLS();
 

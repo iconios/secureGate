@@ -169,14 +169,14 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
           })
           .where(eq(emailVerificationRequests.id, recentRequests.id))
           .returning({
-            id: emailVerificationRequests.id
+            id: emailVerificationRequests.id,
           });
 
         if (!updatedRequest) {
           managerLogs.warn('Unable to update verification request while creating manager account', {
             email: redactEmailUsername(email),
             phone: maskPhone(phone),
-          })
+          });
           return errorResponseHelper(
             'Unable to resend verification email',
             'VERIFICATION_REQUEST_UPDATE_FAILED',
@@ -236,18 +236,16 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
       if (!recentRequests) {
         const rawCode = generateUniqueCode();
         const newHashedCode = await hashString(rawCode);
-        await db
-          .insert(emailVerificationRequests)
-          .values({
-            email,
-            purpose: 'account_registration',
-            codeHash: newHashedCode,
-            sentCount: 1,
-            codeExpiresAt: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000).toISOString(),
-            nextAllowedAt: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
-            windowStartedAt: now.toISOString(),
-            windowExpiresAt: new Date(now.getTime() + windowMinutes * 60 * 1000).toISOString(),
-          });
+        await db.insert(emailVerificationRequests).values({
+          email,
+          purpose: 'account_registration',
+          codeHash: newHashedCode,
+          sentCount: 1,
+          codeExpiresAt: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000).toISOString(),
+          nextAllowedAt: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
+          windowStartedAt: now.toISOString(),
+          windowExpiresAt: new Date(now.getTime() + windowMinutes * 60 * 1000).toISOString(),
+        });
 
         if (isDev) {
           console.log('Generated raw code for new manager:', rawCode); // Debug log to verify code generation
@@ -283,7 +281,7 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
         fullName: full_name,
         phone,
         passwordHash,
-        isVerified: false
+        isVerified: false,
       });
 
       await tx.insert(emailVerificationRequests).values({
@@ -308,7 +306,7 @@ const CreateManagerService = async (newManagerData: NewManagerData) => {
     if (isDev) {
       console.log('Generated raw code for new manager:', rawCode); // Debug log to verify code generation
     }
-    
+
     const emailSentResult = await sendVerificationEmail(email, rawCode, full_name);
     if (!emailSentResult.success) {
       managerLogs.error('Manager created but verification email failed to send', {

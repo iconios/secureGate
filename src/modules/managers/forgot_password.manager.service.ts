@@ -147,36 +147,36 @@ const ForgotPasswordManagerService = async (email: ForgotPasswordData) => {
         ? new Date(now.getTime() + windowMinutes * 60 * 1000).toISOString()
         : windowExpiresAt.toISOString();
 
-      await db.transaction(async (tx) => {  
-      await tx
-        .update(emailVerificationRequests)
-        .set({
-          status: 'used',
-          usedAt: now.toISOString(),
-        })
-        .where(
-          and(
-            ne(emailVerificationRequests.id, existingRequest.id),
-            eq(emailVerificationRequests.status, 'pending'),
-            eq(emailVerificationRequests.purpose, 'password_reset'),
-            eq(emailVerificationRequests.email, userEmail),
-          ),
-        )
+      await db.transaction(async (tx) => {
+        await tx
+          .update(emailVerificationRequests)
+          .set({
+            status: 'used',
+            usedAt: now.toISOString(),
+          })
+          .where(
+            and(
+              ne(emailVerificationRequests.id, existingRequest.id),
+              eq(emailVerificationRequests.status, 'pending'),
+              eq(emailVerificationRequests.purpose, 'password_reset'),
+              eq(emailVerificationRequests.email, userEmail),
+            ),
+          );
 
-      await tx
-        .update(emailVerificationRequests)
-        .set({
-          codeHash: hashedResetCode,
-          sentCount: nextSentCount,
-          lastSentAt: now.toISOString(),
-          nextAllowedAt: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
-          windowStartedAt: nextWindowStartedAt,
-          windowExpiresAt: nextWindowExpiresAt,
-          codeExpiresAt: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000).toISOString(),
-        })
-        .where(eq(emailVerificationRequests.id, existingRequest.id));
+        await tx
+          .update(emailVerificationRequests)
+          .set({
+            codeHash: hashedResetCode,
+            sentCount: nextSentCount,
+            lastSentAt: now.toISOString(),
+            nextAllowedAt: new Date(now.getTime() + cooldownMinutes * 60 * 1000).toISOString(),
+            windowStartedAt: nextWindowStartedAt,
+            windowExpiresAt: nextWindowExpiresAt,
+            codeExpiresAt: new Date(now.getTime() + codeExpiryMinutes * 60 * 1000).toISOString(),
+          })
+          .where(eq(emailVerificationRequests.id, existingRequest.id));
       });
-      
+
       // Step 6. Send the new password reset code to the user's email
       managerLogs.info('Updated existing password reset request', {
         email: redactEmailUsername(userEmail),

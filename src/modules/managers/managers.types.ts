@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { termiiPhoneSchema } from '../houseHolds/households.types.js';
 
 const PasswordSchema = z
   .string()
@@ -16,7 +17,7 @@ export const ManagersRowSchema = z
     updated_at: z.iso.datetime().nullable(),
     full_name: z.string().min(2).max(100).trim(),
     email: z.email().toLowerCase().trim(),
-    phone: z.string(),
+    phone: termiiPhoneSchema,
     password_hash: z.string(),
     last_login_at: z.iso.datetime().nullable(),
     is_verified: z.boolean().default(false),

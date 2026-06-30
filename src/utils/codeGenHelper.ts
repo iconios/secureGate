@@ -1,4 +1,5 @@
 import { customAlphabet } from 'nanoid';
+import { consecutiveUniqueRandom } from 'unique-random';
 
 export const generateUniqueCode = (): string => {
   // 1. Define your alphanumeric character set
@@ -12,3 +13,5 @@ export const generateUniqueCode = (): string => {
   console.log('Generated unique code:', uniqueCode); // Debug log to verify code generation
   return uniqueCode;
 };
+
+export const generateCode = () => consecutiveUniqueRandom(100000, 999999);

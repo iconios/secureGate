@@ -1,9 +1,18 @@
-import { pgTable, foreignKey, uuid, timestamp, text, pgEnum, date, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  foreignKey,
+  uuid,
+  timestamp,
+  text,
+  pgEnum,
+  date,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm/relations';
 import { estates } from './estates.js';
 import { sql } from 'drizzle-orm';
 
-export const genderEnum = pgEnum('genders', ['male', 'female', 'unknown'])
+export const genderEnum = pgEnum('genders', ['male', 'female', 'unknown']);
 
 export const persons = pgTable(
   'persons',
@@ -27,14 +36,8 @@ export const persons = pgTable(
       foreignColumns: [estates.id],
       name: 'persons_estate_id_fkey',
     }),
-    uniqueIndex('persons_estate_email_unique_idx').on(
-      table.estateId,
-      sql`lower(${table.email})`,
-    ),
-    uniqueIndex('persons_estate_phone_unique_idx').on(
-      table.estateId,
-      sql`lower(${table.phone})`,
-    ),
+    uniqueIndex('persons_estate_email_unique_idx').on(table.estateId, sql`lower(${table.email})`),
+    uniqueIndex('persons_estate_phone_unique_idx').on(table.estateId, sql`lower(${table.phone})`),
   ],
 ).enableRLS();
 

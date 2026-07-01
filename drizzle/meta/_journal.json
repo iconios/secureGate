@@ -64,6 +64,13 @@
       "when": 1782680462724,
       "tag": "0008_natural_catseye",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1782891510791,
+      "tag": "0009_mushy_sphinx",
+      "breakpoints": true
     }
   ]
 }

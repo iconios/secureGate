@@ -13,6 +13,7 @@ import { EstatesManagerRouter } from './modules/estateManagers/estate_manager.ro
 import PaymentRouter from './modules/payments/payment.routes.js';
 import UpdateEstatePaymentDetailsController from './modules/payments/update.estate_payment_details.controller.js';
 import { dbMaintenanceRouter } from './modules/dbMaintenance/dbMaintenance.routes.js';
+import { HouseholdsRouter } from './modules/houseHolds/households.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3010;
@@ -50,6 +51,7 @@ app.use('/api/v1/subscription_plans', PlansRouter);
 app.use('/api/v1/estates_manager', EstatesManagerRouter);
 app.use('/api/v1/payments', PaymentRouter);
 app.use('/api/v1/maintenance', dbMaintenanceRouter);
+app.use('/api/v1/households', HouseholdsRouter);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   logger.warn('Endpoint not found', {

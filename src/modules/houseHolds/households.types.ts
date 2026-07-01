@@ -78,3 +78,11 @@ export type CreatedHouseholdSummary = {
     code?: string;
   }[];
 };
+
+const CreateHouseholdControllerInputSchema = CreateHouseholdInputSchema.omit({
+  createdByManagerId: true,
+});
+
+export type CreateHouseholdControllerInputType = z.infer<
+  typeof CreateHouseholdControllerInputSchema
+>;

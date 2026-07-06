@@ -86,3 +86,19 @@ const CreateHouseholdControllerInputSchema = CreateHouseholdInputSchema.omit({
 export type CreateHouseholdControllerInputType = z.infer<
   typeof CreateHouseholdControllerInputSchema
 >;
+
+export const FetchHouseholdsByEstateSchema = z
+  .object({
+    userId: z.string().min(1),
+    estateId: z.string().min(1),
+    page: z.coerce.number().optional().default(1),
+    pageSize: z.coerce.number().optional().default(10),
+    searchTerm: z.string().trim().optional().default(''),
+  })
+  .strict();
+
+export type FetchHouseholdsByEstateType = z.input<typeof FetchHouseholdsByEstateSchema>;
+
+export const FetchHouseholdsByEstateControllerBody = FetchHouseholdsByEstateSchema.omit({
+  userId: true,
+});

@@ -10,15 +10,23 @@ import { Request, Response } from 'express';
 import { CreateHouseholdControllerInputType } from '../households.types.js';
 import { errorResponseHelper } from '../../../utils/errorResponseHelper.js';
 import { CreateHouseholdsService } from './create_households_service.js';
+import logger from '../../../common/winston/logger.js';
+import { randomUUID } from 'crypto';
 
 export const CreateHouseholdsController = async (
   req: Request<{}, {}, CreateHouseholdControllerInputType>,
   res: Response,
 ) => {
+  const householdLogs = logger.child({
+    service: 'CreateHouseholdsController',
+    requestId: randomUUID(),
+  });
+
   try {
     // Step 1. Accept and validate the household creation data
     const userId = req.userId;
     if (!userId) {
+      householdLogs.warn('Unauthorized: User ID is missing');
       return res
         .status(401)
         .json(
@@ -63,6 +71,10 @@ export const CreateHouseholdsController = async (
     return res.status(201).json(result);
   } catch (error) {
     const errMessage = error instanceof Error ? error.message : 'Internal Server Error';
+    householdLogs.warn('Internal server error', {
+      message: errMessage,
+      error,
+    });
     return res
       .status(500)
       .json(errorResponseHelper('Internal server error', 'SERVER_ERROR', errMessage, error));

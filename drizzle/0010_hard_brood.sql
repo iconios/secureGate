@@ -1,0 +1,2 @@
+ALTER TABLE "residents" ADD CONSTRAINT "residents_estate_id_fkey" FOREIGN KEY ("household_id") REFERENCES "public"."estates"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "residents_estate_id_idx" ON "residents" USING btree ("household_id");

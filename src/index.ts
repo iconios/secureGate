@@ -14,10 +14,12 @@ import PaymentRouter from './modules/payments/payment.routes.js';
 import UpdateEstatePaymentDetailsController from './modules/payments/update.estate_payment_details.controller.js';
 import { dbMaintenanceRouter } from './modules/dbMaintenance/dbMaintenance.routes.js';
 import { HouseholdsRouter } from './modules/houseHolds/households.routes.js';
+import { residentsRouter } from './modules/residents/residents.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3010;
 const isProduction = process.env.NODE_ENV === 'production';
+const apiVersion_1 = '/api/v1'
 
 app.use(cors());
 app.use(
@@ -46,12 +48,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 app.get('/health', (_, res) => res.send('OK'));
-app.use('/api/v1/managers', ManagerRouter);
-app.use('/api/v1/subscription_plans', PlansRouter);
-app.use('/api/v1/estates_manager', EstatesManagerRouter);
-app.use('/api/v1/payments', PaymentRouter);
-app.use('/api/v1/maintenance', dbMaintenanceRouter);
-app.use('/api/v1/households', HouseholdsRouter);
+app.use(`${apiVersion_1}/managers`, ManagerRouter);
+app.use(`${apiVersion_1}/subscription_plans`, PlansRouter);
+app.use(`${apiVersion_1}/estates_manager`, EstatesManagerRouter);
+app.use(`${apiVersion_1}/payments`, PaymentRouter);
+app.use(`${apiVersion_1}/maintenance`, dbMaintenanceRouter);
+app.use(`${apiVersion_1}/households`, HouseholdsRouter);
+app.use(`${apiVersion_1}/residents`, residentsRouter);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   logger.warn('Endpoint not found', {

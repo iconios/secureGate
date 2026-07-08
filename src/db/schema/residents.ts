@@ -3,6 +3,7 @@ import { relations } from 'drizzle-orm/relations';
 import { households } from './households.js';
 import { persons } from './persons.js';
 import { managers } from './managers.js';
+import { estates } from './estates.js';
 
 export const roleEnum = pgEnum('roles', ['principal', 'assistant', 'member']);
 
@@ -15,6 +16,7 @@ export const residents = pgTable(
       .notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }),
     householdId: uuid('household_id').notNull(),
+    estateId: uuid('household_id').notNull(),
     personId: uuid('person_id').notNull(),
     role: roleEnum().default('member').notNull(),
     delistedAt: timestamp('delisted_at', { withTimezone: true, mode: 'string' }),
@@ -23,6 +25,11 @@ export const residents = pgTable(
     code: text().notNull().unique(),
   },
   (table) => [
+    foreignKey({
+      columns: [table.estateId],
+      foreignColumns: [estates.id],
+      name: 'residents_estate_id_fkey',
+    }),
     foreignKey({
       columns: [table.householdId],
       foreignColumns: [households.id],
@@ -45,6 +52,7 @@ export const residents = pgTable(
     }),
     index('residents_household_id_idx').on(table.householdId),
     index('residents_person_id_idx').on(table.personId),
+    index('residents_estate_id_idx').on(table.estateId),
     index('residents_household_person_delisted_idx').on(
       table.householdId,
       table.personId,
@@ -54,6 +62,10 @@ export const residents = pgTable(
 ).enableRLS();
 
 export const residentsRelations = relations(residents, ({ one }) => ({
+  estate: one(estates, {
+    fields: [residents.estateId],
+    references: [estates.id],
+  }),
   household: one(households, {
     fields: [residents.householdId],
     references: [households.id],

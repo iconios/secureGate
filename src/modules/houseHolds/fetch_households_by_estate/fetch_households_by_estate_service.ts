@@ -32,6 +32,7 @@ import { FetchHouseholdsByEstateSchema, FetchHouseholdsByEstateType } from '../h
 import { ZodError } from 'zod';
 import logger from '../../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
+import { estates } from '../../../db/schema/estates.js';
 
 export const fetchHouseholdsByEstateService = async (
   fetchHouseholdsInput: FetchHouseholdsByEstateType,
@@ -69,9 +70,11 @@ export const fetchHouseholdsByEstateService = async (
     const [userEstateData] = await db
       .select({
         id: estateManagers.id,
+        name: estates.name,
       })
       .from(estateManagers)
       .where(and(eq(estateManagers.managerId, userId), eq(estateManagers.estateId, estateId)))
+      .innerJoin(estates, eq(estates.id, estateId))
       .limit(1);
 
     if (!userEstateData) {
@@ -82,7 +85,7 @@ export const fetchHouseholdsByEstateService = async (
       return errorResponseHelper(
         'User not associated with the estate',
         'ACCESS_DENIED',
-        'User not associated with the estate',
+        `${householdLogs.defaultMeta?.requestId}`,
       );
     }
 
@@ -170,6 +173,7 @@ export const fetchHouseholdsByEstateService = async (
       });
       return successResponseHelper('Households data fetched successfully', {
         estateId,
+        estateName: userEstateData.name,
         summary: {
           householdsTotal: totalHouseholds,
           membersTotal: totalMembers,
@@ -247,6 +251,7 @@ export const fetchHouseholdsByEstateService = async (
     });
     return successResponseHelper('Households data fetched successfully', {
       estateId: estateId,
+      estateName: userEstateData.name,
       summary: {
         householdsTotal: totalHouseholds,
         membersTotal: totalMembers,
@@ -272,7 +277,7 @@ export const fetchHouseholdsByEstateService = async (
       return errorResponseHelper(
         'Error validating households data',
         'VALIDATION_ERROR',
-        'Error validating households data',
+        `${householdLogs.defaultMeta?.requestId}`,
         error,
       );
     }
@@ -285,7 +290,7 @@ export const fetchHouseholdsByEstateService = async (
     return errorResponseHelper(
       'Unexcepted processing households data',
       'UNEXPECTED_ERROR',
-      'Unexcepted processing households data',
+      `${householdLogs.defaultMeta?.requestId}`,
       error,
     );
   }

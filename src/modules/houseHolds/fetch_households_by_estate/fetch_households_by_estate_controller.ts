@@ -25,7 +25,13 @@ export const fetchHouseholdsByEstateController = async (req: Request, res: Respo
       householdLogs.warn('User id required');
       return res
         .status(401)
-        .json(errorResponseHelper('User id required', 'USER_ID_REQUIRED', 'User id required'));
+        .json(
+          errorResponseHelper(
+            'User id required',
+            'USER_ID_REQUIRED',
+            `${householdLogs.defaultMeta?.requestId}`,
+          ),
+        );
     }
 
     const { estateId, page, pageSize, searchTerm } = req.query;
@@ -39,7 +45,7 @@ export const fetchHouseholdsByEstateController = async (req: Request, res: Respo
           errorResponseHelper(
             'Estate id required or format invalid',
             'ESTATE_ID_OR_FORMAT_INVALID',
-            'Estate id required or format invalid',
+            `${householdLogs.defaultMeta?.requestId}`,
           ),
         );
     }
@@ -55,7 +61,7 @@ export const fetchHouseholdsByEstateController = async (req: Request, res: Respo
           errorResponseHelper(
             'Search term format invalid',
             'SEARCH_TERM_FORMAT_INVALID',
-            'Search term format invalid',
+            `${householdLogs.defaultMeta?.requestId}`,
           ),
         );
     }
@@ -90,6 +96,13 @@ export const fetchHouseholdsByEstateController = async (req: Request, res: Respo
     });
     return res
       .status(500)
-      .json(errorResponseHelper('Internal server error', 'SERVER_ERROR', errMessage, error));
+      .json(
+        errorResponseHelper(
+          'Internal server error',
+          'SERVER_ERROR',
+          `${householdLogs.defaultMeta?.requestId}`,
+          error,
+        ),
+      );
   }
 };

@@ -92,7 +92,7 @@ const LoginManagerService = async (loginData: LoginManagerData) => {
       email: manager.manager_email,
       role: 'manager',
     };
-    const token = jwt.sign(payload, JWT_SECRET!, { expiresIn: '10h' });
+    const token = jwt.sign(payload, JWT_SECRET!, { expiresIn: '10d' });
 
     // 5. Update last_login_at record
     const [updatedManager] = await db

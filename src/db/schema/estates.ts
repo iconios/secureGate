@@ -1,5 +1,4 @@
-import { pgTable, foreignKey, uuid, timestamp, text, smallint, pgEnum } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
+import { pgTable, foreignKey, uuid, timestamp, text, pgEnum, integer } from 'drizzle-orm/pg-core';
 import { payments } from './payments.js';
 import { relations } from 'drizzle-orm/relations';
 import { estateManagers } from './estateManagers.js';
@@ -27,7 +26,7 @@ export const estates = pgTable(
     paymentId: uuid('payment_id'),
     updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }),
     deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'string' }),
-    numberOfHouseholds: smallint('number_of_households').default(sql`'0'`),
+    numberOfHouseholds: integer('number_of_households').notNull().default(0),
     status: estateStatus().notNull(),
     logoUrl: text('logo_url'),
   },

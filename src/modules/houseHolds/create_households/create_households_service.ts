@@ -11,7 +11,8 @@
     - Check that resident is not already a resident of another household within the estate
 8. Create household, persons, and residents inside a transaction
 9. Generate and store household/resident access code
-10. Return created household summary
+10. Update the number of households in estate
+11. Return created household summary
 */
 
 import { ZodError } from 'zod';
@@ -25,12 +26,13 @@ import logger from '../../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
 import db from '../../../db/index.js';
 import { households } from '../../../db/schema/households.js';
-import { and, eq, inArray, or, SQL } from 'drizzle-orm';
+import { and, eq, inArray, or, sql, SQL } from 'drizzle-orm';
 import { persons } from '../../../db/schema/persons.js';
 import { estateManagers } from '../../../db/schema/estateManagers.js';
 import { residents } from '../../../db/schema/residents.js';
 import { generateCode } from '../../../utils/codeGenHelper.js';
 import { successResponseHelper } from '../../../utils/successResponseHelper.js';
+import { estates } from '../../../db/schema/estates.js';
 
 export const CreateHouseholdsService = async (newHouseholdData: CreateHouseholdInputType) => {
   const householdLogs = logger.child({
@@ -420,6 +422,7 @@ export const CreateHouseholdsService = async (newHouseholdData: CreateHouseholdI
           code: principalResidentCode,
           householdId: insertedHousehold.id,
           personId: principalPersonId,
+          estateId: estateId,
           role: 'principal',
         });
 
@@ -454,6 +457,7 @@ export const CreateHouseholdsService = async (newHouseholdData: CreateHouseholdI
             personId: memberPersonId,
             role: 'member',
             addedByManager: createdByManagerId,
+            estateId: estateId,
             code: residentCode,
           });
 
@@ -462,6 +466,17 @@ export const CreateHouseholdsService = async (newHouseholdData: CreateHouseholdI
             code: residentCode,
           });
         }
+
+        // 10. Update the number of households in estate
+        await tx
+          .update(estates)
+          .set({
+            numberOfHouseholds: sql<number>`
+              COALESCE(${estates.numberOfHouseholds}, 0)
+              + ${householdsData.length}
+            `,
+          })
+          .where(eq(estates.id, estateId));
 
         // Add to return bundle
         summaries.push({
@@ -479,7 +494,7 @@ export const CreateHouseholdsService = async (newHouseholdData: CreateHouseholdI
       return summaries;
     });
 
-    // 10. Return created household summary
+    // 11. Return created household summary
     householdLogs.info('Households and residents successfully provisioned', {
       estateId,
       managerId: createdByManagerId,

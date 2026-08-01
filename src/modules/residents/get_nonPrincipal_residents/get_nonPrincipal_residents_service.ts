@@ -7,7 +7,7 @@
 4. Send the appropriate response to the caller/client
 */
 
-import { and, eq, ilike, ne, or } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, ne, or } from 'drizzle-orm';
 import db from '../../../db/index.js';
 import { estateManagers } from '../../../db/schema/estateManagers.js';
 import { errorResponseHelper } from '../../../utils/errorResponseHelper.js';
@@ -34,16 +34,23 @@ export const getAllNonPrincipalResidentsByEstateService = async (
   let estateIdProcessing = '';
   try {
     // 1. Accept and validate user id and estate id
-    const { userId, estateId, searchTerm } =
+    const { userId, estateId, searchTerm, page, pageSize } =
       GetAllNonPrincipalResidentsByEstateSchema.parse(userEstateInput);
     userIdProcessing = userId;
     estateIdProcessing = estateId;
 
+    const safePage = Math.max(page ?? 1, 1);
+    const safePageSize = Math.min(Math.max(pageSize ?? 10, 1), 100);
+    const offset = (safePage - 1) * safePageSize;
+
     // 2. Verify that the user id is associated with the estate id
     const [userLinkedData] = await db
-      .select()
+      .select({
+        id: estateManagers.id,
+      })
       .from(estateManagers)
-      .where(and(eq(estateManagers.managerId, userId), eq(estateManagers.estateId, estateId)));
+      .where(and(eq(estateManagers.managerId, userId), eq(estateManagers.estateId, estateId)))
+      .limit(1);
 
     if (!userLinkedData) {
       residentLogs.warn('User not associated with estate', {
@@ -58,12 +65,12 @@ export const getAllNonPrincipalResidentsByEstateService = async (
     }
 
     // 3. Fetch all the non-principal residents of the estate id
-    const search = `%${searchTerm}%`;
+    const searchPattern = `%${searchTerm}%`;
     const residentsWhere = searchTerm
       ? and(
           eq(residents.estateId, estateId),
           ne(residents.role, 'principal'),
-          or(ilike(persons.fullName, search), ilike(persons.phone, search)),
+          or(ilike(persons.fullName, searchPattern), ilike(persons.phone, searchPattern)),
         )
       : and(eq(residents.estateId, estateId), ne(residents.role, 'principal'));
 
@@ -72,10 +79,26 @@ export const getAllNonPrincipalResidentsByEstateService = async (
         id: residents.id,
         fullName: persons.fullName,
         phone: persons.phone,
+        email: persons.email,
+        photoUrl: persons.photoUrl,
+      })
+      .from(residents)
+      .innerJoin(persons, eq(residents.personId, persons.id))
+      .where(residentsWhere)
+      .orderBy(asc(persons.fullName), asc(persons.id))
+      .limit(safePageSize)
+      .offset(offset);
+
+    const [totalResult] = await db
+      .select({
+        totalItems: count(),
       })
       .from(residents)
       .innerJoin(persons, eq(residents.personId, persons.id))
       .where(residentsWhere);
+
+    const totalItems = totalResult?.totalItems ?? 0;
+    const totalPages = Math.ceil(totalItems / safePageSize);
 
     // 4. Send the appropriate response to the caller/client
     residentLogs.info('Non-principal residents successfully fetched', {
@@ -86,6 +109,12 @@ export const getAllNonPrincipalResidentsByEstateService = async (
     return successResponseHelper('Non-principal residents successfully fetched', {
       count: nonPrincipals?.length,
       nonPrincipals: nonPrincipals,
+      pagination: {
+        page: safePage,
+        pageSize: safePageSize,
+        totalItems,
+        totalPages,
+      },
     });
   } catch (error) {
     const errorMessage =

@@ -19,7 +19,7 @@ import { residentsRouter } from './modules/residents/residents.routes.js';
 const app = express();
 const PORT = process.env.PORT || 3010;
 const isProduction = process.env.NODE_ENV === 'production';
-const apiVersion_1 = '/api/v1'
+const apiVersion_1 = '/api/v1';
 
 app.use(cors());
 app.use(

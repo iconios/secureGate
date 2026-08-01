@@ -24,6 +24,7 @@ export const getAllNonPrincipalResidentsByEstateController = async (
   try {
     // 1. Accept and validate the fetch request data
     const userId = req.userId;
+    console.log('User id', userId);
     if (!userId) {
       residentLogs.warn('User id required');
       return res
@@ -31,27 +32,44 @@ export const getAllNonPrincipalResidentsByEstateController = async (
         .json(errorResponseHelper('User id required', 'USER_ID_REQUIRED', 'User id required'));
     }
 
-    const estateId = req.body.estateId;
+    const { estateId, page, pageSize, searchTerm } = req.query;
     if (!estateId || typeof estateId !== 'string') {
-      residentLogs.warn('Estate id missing or format invalid', {
-        userId,
+      residentLogs.warn('Estate id required or format invalid', {
+        userId: userId,
       });
       return res
         .status(400)
         .json(
           errorResponseHelper(
-            'Estate id missing or format invalid',
-            'ESTATE_ID_MISSING_OR_FORMAT_INVALID',
-            'Estate id missing or format invalid',
+            'Estate id required or format invalid',
+            'ESTATE_ID_OR_FORMAT_INVALID',
+            `${residentLogs.defaultMeta?.requestId}`,
           ),
         );
     }
-    const searchTerm = req.body.searchTerm;
+
+    if (searchTerm && typeof searchTerm !== 'string') {
+      residentLogs.warn('Search term format invalid', {
+        userId: userId,
+        estateId: estateId,
+      });
+      return res
+        .status(400)
+        .json(
+          errorResponseHelper(
+            'Search term format invalid',
+            'SEARCH_TERM_FORMAT_INVALID',
+            `${residentLogs.defaultMeta?.requestId}`,
+          ),
+        );
+    }
 
     // 2. Pass the data to getAllNonPrincipalResidentsByEstateService
     const result = await getAllNonPrincipalResidentsByEstateService({
       userId,
       estateId,
+      page,
+      pageSize,
       searchTerm,
     });
 

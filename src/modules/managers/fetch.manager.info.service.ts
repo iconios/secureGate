@@ -62,6 +62,7 @@ const FetchManagerInfoService = async (token: string) => {
         full_name: decoded.full_name,
       },
       role: decoded.role,
+      token: token,
     });
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {

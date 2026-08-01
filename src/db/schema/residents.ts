@@ -16,7 +16,7 @@ export const residents = pgTable(
       .notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }),
     householdId: uuid('household_id').notNull(),
-    estateId: uuid('household_id').notNull(),
+    estateId: uuid('estate_id').notNull(),
     personId: uuid('person_id').notNull(),
     role: roleEnum().default('member').notNull(),
     delistedAt: timestamp('delisted_at', { withTimezone: true, mode: 'string' }),

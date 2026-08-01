@@ -14,4 +14,7 @@ export const generateUniqueCode = (): string => {
   return uniqueCode;
 };
 
-export const generateCode = () => consecutiveUniqueRandom(100000, 999999);
+const numericCodeGenerator = consecutiveUniqueRandom(100000, 999999);
+export const generateCode = (): string => {
+  return String(numericCodeGenerator());
+};

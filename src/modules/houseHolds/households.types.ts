@@ -16,11 +16,7 @@ const emailSchema = z
   .trim()
   .transform((v) => v.toLowerCase());
 
-const blockOrStreetSchema = z
-  .string()
-  .trim()
-  .min(2)
-  .transform((v) => v.toLowerCase());
+const blockOrStreetSchema = z.string().trim().min(2);
 
 export const CreateHouseholdInputSchema = z.object({
   estateId: z.uuid(),
@@ -28,13 +24,7 @@ export const CreateHouseholdInputSchema = z.object({
   households: z.array(
     z.object({
       house: z.object({
-        unitNumber: z
-          .string()
-          .trim()
-          .min(1)
-          .max(50)
-          .trim()
-          .transform((v) => v.toLowerCase()),
+        unitNumber: z.string().trim().min(1).max(50).trim(),
         blockOrStreet: blockOrStreetSchema.optional(),
       }),
       principalResident: z.object({
@@ -91,8 +81,8 @@ export const FetchHouseholdsByEstateSchema = z
   .object({
     userId: z.string().min(1),
     estateId: z.string().min(1),
-    page: z.coerce.number().optional().default(1),
-    pageSize: z.coerce.number().optional().default(10),
+    page: z.coerce.number().int().positive().optional().default(1),
+    pageSize: z.coerce.number().int().positive().max(100).optional().default(10),
     searchTerm: z.string().trim().optional().default(''),
   })
   .strict();
@@ -102,3 +92,47 @@ export type FetchHouseholdsByEstateType = z.input<typeof FetchHouseholdsByEstate
 export const FetchHouseholdsByEstateControllerBody = FetchHouseholdsByEstateSchema.omit({
   userId: true,
 });
+
+const idSchema = z.string().trim().min(1, 'ID is required');
+
+export const UpdateHouseholdDataSchema = z
+  .object({
+    unitNumber: z.string().trim().min(1).max(50).optional(),
+    blockOrStreet: blockOrStreetSchema.optional(),
+  })
+  .strict()
+  .refine((data) => Object.values(data).some((value) => value !== undefined), {
+    message: 'Provide at least one household field to update',
+  });
+
+export type UpdateHouseholdDataType = z.infer<typeof UpdateHouseholdDataSchema>;
+
+export const UpdateHouseholdPrincipalDataSchema = z
+  .object({
+    fullName: z.string().trim().min(1).max(150).optional(),
+    email: emailSchema.optional(),
+    phone: termiiPhoneSchema.optional(),
+    gender: z.enum(['male', 'female']).optional(),
+    photoUrl: z.url().optional(),
+    dateOfBirth: z.date().optional(),
+  })
+  .strict()
+  .refine((data) => Object.values(data).some((value) => value !== undefined), {
+    message: 'Provide at least one principal field to update',
+  });
+
+export type UpdateHouseholdPrincipalDataType = z.infer<typeof UpdateHouseholdPrincipalDataSchema>;
+
+export const UpdateHouseholdPrincipalRequestSchema = z
+  .object({
+    household: UpdateHouseholdDataSchema.optional(),
+    principal: UpdateHouseholdPrincipalDataSchema.optional(),
+  })
+  .strict()
+  .refine((data) => data.household !== undefined || data.principal !== undefined, {
+    message: 'Provide household or principal update data',
+  });
+
+export type UpdateHouseholdPrincipalRequestType = z.infer<
+  typeof UpdateHouseholdPrincipalRequestSchema
+>;

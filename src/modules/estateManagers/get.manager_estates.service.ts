@@ -13,10 +13,11 @@ import { successResponseHelper } from '../../utils/successResponseHelper.js';
 import { ZodError } from 'zod';
 import db from '../../db/index.js';
 import { estateManagers } from '../../db/schema/estateManagers.js';
-import { eq } from 'drizzle-orm';
+import { and, count, eq, inArray } from 'drizzle-orm';
 import { estates } from '../../db/schema/estates.js';
 import { subscriptionPlans } from '../../db/schema/subscriptionPlans.js';
 import { payments } from '../../db/schema/payments.js';
+import { residents } from '../../db/schema/residents.js';
 
 // Step 1. Get manager id from request (set by authenticateToken middleware) - This will be passed as an argument to the service function
 const GetManagerEstatesService = async (managerId: string) => {
@@ -58,6 +59,36 @@ const GetManagerEstatesService = async (managerId: string) => {
       return successResponseHelper('No estates found for this manager', managerEstates);
     }
 
+    const estateIds = managerEstates.map((estate) => estate.estate_id);
+
+    const [principalResidentCountResults, residentCountResults] = await Promise.all([
+      db
+        .select({
+          estateId: residents.estateId,
+          count: count(),
+        })
+        .from(residents)
+        .where(and(inArray(residents.estateId, estateIds), eq(residents.role, 'principal')))
+        .groupBy(residents.estateId),
+
+      db
+        .select({
+          estateId: residents.estateId,
+          count: count(),
+        })
+        .from(residents)
+        .where(and(inArray(residents.estateId, estateIds)))
+        .groupBy(residents.estateId),
+    ]);
+
+    const principalResidentCountByEstate = new Map(
+      principalResidentCountResults.map((item) => [item.estateId, Number(item.count)]),
+    );
+
+    const residentCountByEstate = new Map(
+      residentCountResults.map((item) => [item.estateId, Number(item.count)]),
+    );
+
     const validEstates = managerEstates.filter(
       (item) => item.estate_payment_status !== null || item.estate_payment_status !== undefined,
     );
@@ -77,6 +108,8 @@ const GetManagerEstatesService = async (managerId: string) => {
         estate_state: item.estate_state,
         estate_status: item.estate_status,
         estate_logo_url: item.estate_logo_url,
+        principal_resident_count: principalResidentCountByEstate.get(item.estate_id) ?? 0,
+        resident_count: residentCountByEstate.get(item.estate_id) ?? 0,
         estate_number_of_households: item.estate_number_of_households,
         estate_plan_id: item.estate_plan_id,
         estate_subscription_plan_name: item.estate_subscription_plan_name,

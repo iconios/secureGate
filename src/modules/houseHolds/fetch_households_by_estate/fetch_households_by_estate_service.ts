@@ -3,18 +3,21 @@
 #Plan:
 1. Get and validate user id and estate id
 2. Verify user id is associated with estate id
-3. Fetch household overview data for the requested estate only:
+3. Fetch the ids and names of all other estates associated with the user id
+4. Fetch household overview data for the requested estate only:
     - total households
     - total members
     - total assistants
-4. Fetch paginated household records for the requested estate only:
+5. Fetch paginated household records for the requested estate only:
    - household code
    - unit number
    - principal resident summary
    - member count
    - assistant count
-5. Return a consistent response:
+6. Return a consistent response:
    - estateId
+   - estateName
+   - all estates ids and names associated with the user id
    - summary
    - households
    - pagination
@@ -89,7 +92,17 @@ export const fetchHouseholdsByEstateService = async (
       );
     }
 
-    // 3. Fetch household overview data for the requested estate only:
+    // 3. Fetch the ids and names of all other estates associated with the user id
+    const allUserEstates = await db
+      .select({
+        id: estates.id,
+        name: estates.name,
+      })
+      .from(estateManagers)
+      .where(eq(estateManagers.managerId, userId))
+      .innerJoin(estates, eq(estates.id, estateManagers.estateId));
+
+    // 4. Fetch household overview data for the requested estate only:
     //    - total households
     //    - total members
     //    - total assistants
@@ -102,7 +115,7 @@ export const fetchHouseholdsByEstateService = async (
         })
         .from(residents)
         .innerJoin(households, eq(residents.householdId, households.id))
-        .where(and(eq(households.estateId, estateId), eq(residents.role, 'member'))),
+        .where(eq(households.estateId, estateId)),
 
       db
         .select({
@@ -132,7 +145,7 @@ export const fetchHouseholdsByEstateService = async (
     const totalItems = Number(totalItemsRow?.count ?? 0);
     const totalPages = Math.ceil(totalItems / safePageSize);
 
-    // 4. Fetch paginated household records for the requested estate only:
+    // 5. Fetch paginated household records for the requested estate only:
     //    - household code
     //    - unit number
     //    - principal resident summary
@@ -151,6 +164,8 @@ export const fetchHouseholdsByEstateService = async (
         principalResidentPhotoUrl: persons.photoUrl,
         principalResidentPhone: persons.phone,
         principalResidentEmail: persons.email,
+        principalResidentGender: persons.gender,
+        principalResidentDateOfBirth: persons.dateOfBirth,
       })
       .from(households)
       .leftJoin(
@@ -170,10 +185,12 @@ export const fetchHouseholdsByEstateService = async (
       householdLogs.info('Households data fetched successfully with zero households', {
         estateId: estateId,
         managerId: userId,
+        allEstatesCount: allUserEstates.length,
       });
-      return successResponseHelper('Households data fetched successfully', {
+      return successResponseHelper('Households data fetched successfully with zero households', {
         estateId,
         estateName: userEstateData.name,
+        allEstates: allUserEstates,
         summary: {
           householdsTotal: totalHouseholds,
           membersTotal: totalMembers,
@@ -190,7 +207,7 @@ export const fetchHouseholdsByEstateService = async (
       });
     }
 
-    // 5. Return a consistent response:
+    // 6. Return a consistent response:
     //    - estateId
     //    - summary
     //    - households
@@ -239,6 +256,8 @@ export const fetchHouseholdsByEstateService = async (
             photoUrl: household.principalResidentPhotoUrl ?? '',
             phone: household.principalResidentPhone ?? '',
             email: household.principalResidentEmail ?? '',
+            gender: household.principalResidentGender,
+            dateOfBirth: household.principalResidentDateOfBirth,
           }
         : null,
       memberCount: memberCountMap.get(household.id) ?? 0,
@@ -248,10 +267,12 @@ export const fetchHouseholdsByEstateService = async (
     householdLogs.info('Households data fetched successfully', {
       estateId: estateId,
       managerId: userId,
+      allEstatesCount: allUserEstates.length,
     });
     return successResponseHelper('Households data fetched successfully', {
       estateId: estateId,
       estateName: userEstateData.name,
+      allEstates: allUserEstates,
       summary: {
         householdsTotal: totalHouseholds,
         membersTotal: totalMembers,
@@ -282,13 +303,13 @@ export const fetchHouseholdsByEstateService = async (
       );
     }
 
-    householdLogs.error('Unexcepted processing households data', {
+    householdLogs.error('Unexcepted error while processing households data', {
       message: errMessage,
       error,
     });
 
     return errorResponseHelper(
-      'Unexcepted processing households data',
+      'Unexcepted error while processing households data',
       'UNEXPECTED_ERROR',
       `${householdLogs.defaultMeta?.requestId}`,
       error,

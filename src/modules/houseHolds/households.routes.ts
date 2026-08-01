@@ -5,6 +5,7 @@ import { FetchBlockOrStreetController } from './fetch_blockOrStreet/fetch_blockO
 import extractToken from '../../middleware/extractToken.js';
 import authenticateToken from '../../middleware/authenticateToken.js';
 import { fetchHouseholdsByEstateController } from './fetch_households_by_estate/fetch_households_by_estate_controller.js';
+import { updateHouseholdAndPrincipalDetailsController } from './update_households/update.household.principal.controller.js';
 
 export const HouseholdsRouter = Router();
 
@@ -13,3 +14,7 @@ HouseholdsRouter.use(extractToken, authenticateToken);
 HouseholdsRouter.post('/create', CreateHouseholdsController);
 HouseholdsRouter.get('/fetch/blockorstreet', FetchBlockOrStreetController);
 HouseholdsRouter.get('/fetch/by-estate', fetchHouseholdsByEstateController);
+HouseholdsRouter.patch(
+  '/update/estate/:estateId/household/:householdId/person/:principalPersonId',
+  updateHouseholdAndPrincipalDetailsController,
+);

@@ -1,0 +1,1 @@
+ALTER TABLE "estates" ALTER COLUMN "number_of_households" SET DATA TYPE integer;

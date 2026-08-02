@@ -14,7 +14,7 @@ import { errorResponseHelper } from '../../../utils/errorResponseHelper.js';
 import {
   GetAllNonPrincipalResidentsByEstateInput,
   GetAllNonPrincipalResidentsByEstateSchema,
-} from '../../residents/residents.types.js';
+} from '../residents.types.js';
 import { residents } from '../../../db/schema/residents.js';
 import { persons } from '../../../db/schema/persons.js';
 import { successResponseHelper } from '../../../utils/successResponseHelper.js';

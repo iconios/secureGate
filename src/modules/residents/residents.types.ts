@@ -13,3 +13,14 @@ export const GetAllNonPrincipalResidentsByEstateSchema = z
 export type GetAllNonPrincipalResidentsByEstateInput = z.input<
   typeof GetAllNonPrincipalResidentsByEstateSchema
 >;
+
+export const SwapPrincipalResidentSchema = z
+  .object({
+    oldPrincipalId: z.string().min(5),
+    newPrincipalId: z.string().min(5),
+    householdId: z.string().min(5),
+    estateId: z.string().min(5),
+  })
+  .strict();
+
+export type SwapPrincipalResidentType = z.infer<typeof SwapPrincipalResidentSchema>;

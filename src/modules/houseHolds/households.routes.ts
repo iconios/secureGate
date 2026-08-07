@@ -1,11 +1,11 @@
 // Households routes
 import { Router } from 'express';
-import { CreateHouseholdsController } from './create_households/create_households_controller.js';
-import { FetchBlockOrStreetController } from './fetch_blockOrStreet/fetch_blockOrStreet_controller.js';
+import { CreateHouseholdsController } from './createHouseholds/createHouseholdsController.js';
+import { FetchBlockOrStreetController } from './fetchBlockOrStreet/fetchBlockOrStreetController.js';
 import extractToken from '../../middleware/extractToken.js';
 import authenticateToken from '../../middleware/authenticateToken.js';
-import { fetchHouseholdsByEstateController } from './fetch_households_by_estate/fetch_households_by_estate_controller.js';
-import { updateHouseholdAndPrincipalDetailsController } from './update_households/update.household.principal.controller.js';
+import { fetchHouseholdsByEstateController } from './fetchHouseholdsByEstate/fetchHouseholdsByEstateController.js';
+import { updateHouseholdAndPrincipalDetailsController } from './updateHouseholdAndPrincipal/updateHouseholdAndPrincipalController.js';
 
 export const HouseholdsRouter = Router();
 
@@ -15,6 +15,6 @@ HouseholdsRouter.post('/create', CreateHouseholdsController);
 HouseholdsRouter.get('/fetch/blockorstreet', FetchBlockOrStreetController);
 HouseholdsRouter.get('/fetch/by-estate', fetchHouseholdsByEstateController);
 HouseholdsRouter.patch(
-  '/update/estate/:estateId/household/:householdId/person/:principalPersonId',
+  '/update/estate/:estateId/household/:householdId/resident/:principalResidentId',
   updateHouseholdAndPrincipalDetailsController,
 );

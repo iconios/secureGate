@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllNonPrincipalResidentsByEstateController } from './get_nonPrincipal_residents_byEstate/get_nonPrincipal_residents_controller.js';
+import { getAllNonPrincipalResidentsByEstateController } from './getNonPrincipalResidentsByEstate/getNonPrincipalResidentsController.js';
 import extractToken from '../../middleware/extractToken.js';
 import authenticateToken from '../../middleware/authenticateToken.js';
 import { getAllNonPrincipalResidentsByHouseholdController } from './getNonPrincipalsByHousehold/getNonPrincipalsController.js';
@@ -14,6 +14,6 @@ residentsRouter.get(
   getAllNonPrincipalResidentsByHouseholdController,
 );
 residentsRouter.patch(
-  'swap/principals/estate/:estateId/household/:householdId',
+  '/swap/principals/estate/:estateId/household/:householdId',
   swapPrincipalResidentController,
 );

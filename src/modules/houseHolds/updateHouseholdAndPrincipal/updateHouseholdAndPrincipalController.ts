@@ -9,7 +9,7 @@
 import { Request, Response } from 'express';
 import { errorResponseHelper } from '../../../utils/errorResponseHelper.js';
 import { UpdateHouseholdPrincipalRequestSchema } from '../households.types.js';
-import { updateHouseholdAndPrincipalDetailsService } from './update.household.principal.service.js';
+import { updateHouseholdAndPrincipalDetailsService } from './updateHouseholdAndPrincipalService.js';
 import logger from '../../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
 
@@ -22,7 +22,7 @@ export const updateHouseholdAndPrincipalDetailsController = async (req: Request,
   try {
     // 1. Accept and validate the fetch request data
     const userId = req.userId;
-    if (!userId || typeof userId === 'string') {
+    if (!userId || typeof userId !== 'string') {
       householdLogs.warn('User id missing or invalid format');
       return res
         .status(400)
@@ -35,7 +35,7 @@ export const updateHouseholdAndPrincipalDetailsController = async (req: Request,
         );
     }
 
-    const { estateId, householdId, principalPersonId } = req.query;
+    const { estateId, householdId, principalResidentId } = req.params;
 
     if (!estateId || typeof estateId !== 'string') {
       householdLogs.warn('Estate id missing or invalid format');
@@ -63,7 +63,7 @@ export const updateHouseholdAndPrincipalDetailsController = async (req: Request,
         );
     }
 
-    if (!principalPersonId || typeof principalPersonId !== 'string') {
+    if (!principalResidentId || typeof principalResidentId !== 'string') {
       householdLogs.warn('Principal person id missing or invalid format');
       return res
         .status(400)
@@ -76,11 +76,11 @@ export const updateHouseholdAndPrincipalDetailsController = async (req: Request,
         );
     }
 
-    const updateDataParseResult = UpdateHouseholdPrincipalRequestSchema.safeParse(
-      req.body.updateData,
-    );
+    const updateDataParseResult = UpdateHouseholdPrincipalRequestSchema.safeParse(req.body);
     if (!updateDataParseResult.success) {
-      householdLogs.warn('Update data missing or invalid');
+      householdLogs.warn('Update data missing or invalid', {
+        updateData: req.body,
+      });
       return res
         .status(400)
         .json(
@@ -99,7 +99,7 @@ export const updateHouseholdAndPrincipalDetailsController = async (req: Request,
       userId,
       estateId,
       householdId,
-      principalPersonId,
+      principalResidentId,
       updateData,
     );
 

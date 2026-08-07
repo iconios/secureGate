@@ -54,8 +54,10 @@ export const fetchHouseholdsByEstateService = async (
     const safePageSize = Math.min(Math.max(pageSize ?? 10, 1), 100);
     const offset = (safePage - 1) * safePageSize;
 
-    const searchPattern = `%${searchTerm}%`;
-    const householdWhere = searchTerm
+    const normalizedSearchTerm = searchTerm?.trim() ?? '';
+    const searchPattern = `%${normalizedSearchTerm}%`;
+
+    const householdSearchWhere = normalizedSearchTerm
       ? and(
           eq(households.estateId, estateId),
           or(
@@ -68,6 +70,19 @@ export const fetchHouseholdsByEstateService = async (
           ),
         )
       : eq(households.estateId, estateId);
+
+    const matchingHouseholds = db
+      .selectDistinct({
+        id: households.id,
+      })
+      .from(households)
+      .leftJoin(
+        residents,
+        and(eq(residents.householdId, households.id), eq(residents.role, 'principal')),
+      )
+      .leftJoin(persons, eq(residents.personId, persons.id))
+      .where(householdSearchWhere)
+      .as('matching_households');
 
     // 2. Verify user id is associated with estate id
     const [userEstateData] = await db
@@ -106,43 +121,35 @@ export const fetchHouseholdsByEstateService = async (
     //    - total households
     //    - total members
     //    - total assistants
-    const [totalHouseholds, totalMembersRows, totalAssistantsRows] = await Promise.all([
-      db.$count(households, eq(households.estateId, estateId)),
+    const [totalHouseholdsRows, totalMembersRows, totalAssistantsRows] = await Promise.all([
+      db
+        .select({
+          count: count(),
+        })
+        .from(matchingHouseholds),
 
       db
         .select({
           count: count(),
         })
         .from(residents)
-        .innerJoin(households, eq(residents.householdId, households.id))
-        .where(eq(households.estateId, estateId)),
+        .innerJoin(matchingHouseholds, eq(residents.householdId, matchingHouseholds.id)),
 
       db
         .select({
           count: count(),
         })
         .from(residents)
-        .innerJoin(households, eq(residents.householdId, households.id))
-        .where(and(eq(households.estateId, estateId), eq(residents.role, 'assistant'))),
+        .innerJoin(matchingHouseholds, eq(residents.householdId, matchingHouseholds.id))
+        .where(eq(residents.role, 'assistant')),
     ]);
-
+    const totalHouseholds = Number(totalHouseholdsRows[0]?.count ?? 0);
     const totalMembers = Number(totalMembersRows[0]?.count ?? 0);
     const totalAssistants = Number(totalAssistantsRows[0]?.count ?? 0);
 
     // Count total household rows for pagination.
-    const [totalItemsRow] = await db
-      .select({
-        count: countDistinct(households.id),
-      })
-      .from(households)
-      .leftJoin(
-        residents,
-        and(eq(residents.householdId, households.id), eq(residents.role, 'principal')),
-      )
-      .leftJoin(persons, eq(residents.personId, persons.id))
-      .where(householdWhere);
+    const totalItems = totalHouseholds;
 
-    const totalItems = Number(totalItemsRow?.count ?? 0);
     const totalPages = Math.ceil(totalItems / safePageSize);
 
     // 5. Fetch paginated household records for the requested estate only:
@@ -173,7 +180,7 @@ export const fetchHouseholdsByEstateService = async (
         and(eq(residents.householdId, households.id), eq(residents.role, 'principal')),
       )
       .leftJoin(persons, eq(residents.personId, persons.id))
-      .where(householdWhere)
+      .where(householdSearchWhere)
       .orderBy(asc(households.code), asc(households.id))
       .limit(safePageSize)
       .offset(offset);

@@ -24,3 +24,12 @@ export const SwapPrincipalResidentSchema = z
   .strict();
 
 export type SwapPrincipalResidentType = z.infer<typeof SwapPrincipalResidentSchema>;
+
+export const GetNonPrincipalsByHouseholdSchema = z.object({
+  userId: z.uuid('Invalid user ID'),
+  householdId: z.uuid('Invalid household ID'),
+  estateId: z.uuid('Invalid estate ID'),
+  searchTerm: z.string().trim().max(100, 'Search term is too long').default('').optional(),
+});
+
+export type GetNonPrincipalsByHouseholdType = z.infer<typeof GetNonPrincipalsByHouseholdSchema>;

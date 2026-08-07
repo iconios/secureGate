@@ -9,7 +9,7 @@
 import { Request, Response } from 'express';
 import { CreateHouseholdControllerInputType } from '../households.types.js';
 import { errorResponseHelper } from '../../../utils/errorResponseHelper.js';
-import { CreateHouseholdsService } from './create_households_service.js';
+import { CreateHouseholdsService } from './createHouseholdsService.js';
 import logger from '../../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
 

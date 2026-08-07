@@ -30,7 +30,7 @@ export const swapPrincipalResidentController = async (req: Request, res: Respons
         );
     }
 
-    const { householdId, estateId } = req.query;
+    const { householdId, estateId } = req.params;
     if (!householdId || typeof householdId !== 'string') {
       residentLogs.warn('Household id is required');
       return res

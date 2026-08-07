@@ -26,9 +26,9 @@ export const persons = pgTable(
     gender: genderEnum().default('unknown').notNull(),
     dateOfBirth: date('date_of_birth'),
     photoUrl: text('photo_url'),
-    phone: text().notNull(),
+    phone: text(),
     estateId: uuid('estate_id').notNull(),
-    email: text().notNull(),
+    email: text(),
   },
   (table) => [
     foreignKey({

@@ -8,7 +8,7 @@
 
 import { Request, Response } from 'express';
 import { errorResponseHelper } from '../../../utils/errorResponseHelper.js';
-import { FetchBlockOrStreetService } from './fetch_blockOrStreet_service.js';
+import { FetchBlockOrStreetService } from './fetchBlockOrStreetService.js';
 import logger from '../../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
 

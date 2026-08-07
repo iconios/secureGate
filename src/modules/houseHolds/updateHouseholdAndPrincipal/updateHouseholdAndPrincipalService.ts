@@ -1,4 +1,4 @@
-// Update Household Principal Service
+// Update Household And Principal Details Service
 /*
 #Plan:
 1. Accept and validate the update data
@@ -31,7 +31,7 @@ export const updateHouseholdAndPrincipalDetailsService = async (
   userId: string,
   estateId: string,
   householdId: string,
-  principalPersonId: string,
+  principalResidentId: string,
   updateData: UpdateHouseholdPrincipalRequestType,
 ) => {
   const householdLogs = logger.child({
@@ -44,7 +44,7 @@ export const updateHouseholdAndPrincipalDetailsService = async (
     const trimmedUserId = userId.trim();
     const trimmedEstateId = estateId.trim();
     const trimmedHouseholdId = householdId.trim();
-    const trimmedPrincipalPersonId = principalPersonId.trim();
+    const trimmedprincipalResidentId = principalResidentId.trim();
 
     if (!trimmedUserId) {
       householdLogs.warn('User id is required');
@@ -72,13 +72,13 @@ export const updateHouseholdAndPrincipalDetailsService = async (
       );
     }
 
-    if (!trimmedPrincipalPersonId) {
-      householdLogs.warn('Principal person ID is required');
+    if (!trimmedprincipalResidentId) {
+      householdLogs.warn('Principal resident ID is required');
 
       return errorResponseHelper(
-        'Principal person ID is required',
-        'PRINCIPAL_PERSON_ID_REQUIRED',
-        'Principal person ID is required',
+        'Principal resident ID is required',
+        'PRINCIPAL_RESIDENT_ID_REQUIRED',
+        'Principal resident ID is required',
       );
     }
 
@@ -126,13 +126,14 @@ export const updateHouseholdAndPrincipalDetailsService = async (
       );
     }
 
-    // 4. Confirm that the specified person is a principal resident of the household.
+    // 4. Confirm that the specified resident is a principal resident of the household.
     const [householdPrincipal] = await db
-      .select()
+      .select({personId: persons.id})
       .from(residents)
+      .innerJoin(persons, eq(persons.id, residents.personId))
       .where(
         and(
-          eq(residents.personId, trimmedPrincipalPersonId),
+          eq(residents.id, trimmedprincipalResidentId),
           eq(residents.householdId, trimmedHouseholdId),
           eq(residents.role, 'principal'),
         ),
@@ -165,13 +166,13 @@ export const updateHouseholdAndPrincipalDetailsService = async (
       if (principal) {
         const principalUpdateData = {
           ...principal,
-          dateOfBirth: principal.dateOfBirth?.toISOString().slice(0, 10),
+          dateOfBirth: principal.dateOfBirth?.toString().slice(0, 10),
         };
 
         await tx
           .update(persons)
           .set(principalUpdateData)
-          .where(eq(persons.id, trimmedPrincipalPersonId));
+          .where(eq(persons.id, householdPrincipal.personId));
       }
 
       const [updatedHousehold] = await tx
@@ -183,7 +184,7 @@ export const updateHouseholdAndPrincipalDetailsService = async (
       const [updatedPrincipal] = await tx
         .select()
         .from(persons)
-        .where(eq(persons.id, trimmedPrincipalPersonId))
+        .where(eq(persons.id, householdPrincipal.personId))
         .limit(1);
 
       return {

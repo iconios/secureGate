@@ -33,7 +33,7 @@ export const getAllNonPrincipalResidentsByHouseholdController = async (
         );
     }
 
-    const { householdId, estateId } = req.query;
+    const { householdId, estateId } = req.params;
     if (!householdId || typeof householdId !== 'string') {
       residentLogs.warn('Household id is required');
       return res
@@ -60,12 +60,27 @@ export const getAllNonPrincipalResidentsByHouseholdController = async (
         );
     }
 
+    const { searchTerm } = req.query;
+    if (searchTerm && typeof searchTerm !== 'string') {
+      residentLogs.warn('Search term format invalid');
+      return res
+        .status(400)
+        .json(
+          errorResponseHelper(
+            'Search term format invalid',
+            'INVALID_SEARCH_TERM_FORMAT',
+            'Search term format invalid',
+          ),
+        );
+    }
+
     // 2. Pass the data to GetAllNonPrincipalResidentsByHouseholdService
-    const result = await getAllNonPrincipalResidentsByHouseholdService(
+    const result = await getAllNonPrincipalResidentsByHouseholdService({
       userId,
       householdId,
       estateId,
-    );
+      searchTerm,
+    });
 
     // 3. Send the appropriate response to the caller/client
     if (!result.success) {

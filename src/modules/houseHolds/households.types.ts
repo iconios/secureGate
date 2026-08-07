@@ -114,7 +114,7 @@ export const UpdateHouseholdPrincipalDataSchema = z
     phone: termiiPhoneSchema.optional(),
     gender: z.enum(['male', 'female']).optional(),
     photoUrl: z.url().optional(),
-    dateOfBirth: z.date().optional(),
+    dateOfBirth: z.iso.datetime().optional(),
   })
   .strict()
   .refine((data) => Object.values(data).some((value) => value !== undefined), {

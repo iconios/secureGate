@@ -4,7 +4,7 @@
 1. Accept and validate user id, old principal id, new principal id, household id, and estate id
 2. Verify that the user id is estate manager of the estate id
 3. Verify that the household id is associated with estate id
-4. Verify that both the old and new principals belong to the specified household
+4. Verify the current principal and selected replacement belong to the household
 5. Swap the old principal with the new one
 6. Send the appropriate response to the caller/client
 */
@@ -20,11 +20,12 @@ import { estateManagers } from '../../../db/schema/estateManagers.js';
 import { households } from '../../../db/schema/households.js';
 import { residents } from '../../../db/schema/residents.js';
 import { successResponseHelper } from '../../../utils/successResponseHelper.js';
+import { persons } from '../../../db/schema/persons.js';
 
 export const swapPrincipalResidentService = async (
   userId: string,
   swapData: SwapPrincipalResidentType,
-) => {
+): Promise<ReturnType<typeof successResponseHelper> | ReturnType<typeof errorResponseHelper>> => {
   const residentLogs = logger.child({
     service: 'swapPrincipalResidentService',
     requestId: randomUUID(),
@@ -84,9 +85,9 @@ export const swapPrincipalResidentService = async (
       );
     }
 
-    // 4. Verify that both the old and new principals belong to the specified household
-    const [isOldPrincipalBelong] = await db
-      .select({ id: residents.id })
+    // 4. Verify the current principal and selected replacement belong to the household
+    const [currentPrincipal] = await db
+      .select({ id: residents.id, })
       .from(residents)
       .where(
         and(
@@ -96,39 +97,56 @@ export const swapPrincipalResidentService = async (
         ),
       );
 
-    const [isNewPrincipalBelong] = await db
-      .select({ id: residents.id, role: residents.role })
+    const [selectedPrincipal] = await db
+      .select({ 
+        id: residents.id,
+        fullName: persons.fullName,
+        phone: persons.phone,
+        photoUrl: persons.photoUrl, 
+        email: persons.email,
+        gender: persons.gender,
+        dateOfBirth: persons.dateOfBirth,
+        role: residents.role
+      })
       .from(residents)
+      .innerJoin(persons, eq(persons.id, residents.personId))
       .where(
         and(
           eq(residents.id, newPrincipalId),
           eq(residents.householdId, householdId),
           ne(residents.role, 'principal'),
         ),
-      );
+      )
+      .limit(1);
 
-    let messageToSend: string[] = [];
-    if (!isOldPrincipalBelong) {
-      messageToSend.push('The current principal resident does not belong to the household');
-    }
+    if (!currentPrincipal || !selectedPrincipal) {
+      const messages: string[] = [];
 
-    if (!isNewPrincipalBelong) {
-      messageToSend.push('The selected new principal resident does not belong to the household');
-    }
+      if (!currentPrincipal) {
+        messages.push(
+          'The current principal resident does not belong to the household or is not the principal',
+        );
+      }
 
-    if (messageToSend.length > 0) {
-      residentLogs.warn('One principal or another do not belong to household specified', {
+      if (!selectedPrincipal) {
+        messages.push(
+          'The selected resident does not belong to the household or is already the principal',
+        );
+      }
+
+      const message = messages.join(' and ');
+
+      residentLogs.warn('One or more residents failed swap validation', {
         ...logContext,
+        oldPrincipalId,
+        newPrincipalId,
       });
-      return errorResponseHelper(
-        `${messageToSend.join(' and ')}`,
-        'ONE_OR_MORE_IDS_HOUSEHOLD_MISMATCH',
-        `${messageToSend.join(' and ')}`,
-      );
+
+      return errorResponseHelper(message, 'ONE_OR_MORE_IDS_HOUSEHOLD_MISMATCH', message);
     }
 
     // 5. Swap the old principal with the new one
-    const originalNewResidentRole = isNewPrincipalBelong.role ?? 'member';
+    const originalNewResidentRole = selectedPrincipal.role;
     await db.transaction(async (tx) => {
       await tx
         .update(residents)
@@ -153,7 +171,10 @@ export const swapPrincipalResidentService = async (
     });
     return successResponseHelper('The swap has been successfully done', {
       oldPrincipalId: oldPrincipalId,
-      newPrincipalId: newPrincipalId,
+      newPrincipal: {
+        ...selectedPrincipal,
+        role: "principal",
+      },
     });
   } catch (error: unknown) {
     const errorMessage =

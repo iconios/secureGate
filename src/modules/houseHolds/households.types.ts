@@ -136,3 +136,15 @@ export const UpdateHouseholdPrincipalRequestSchema = z
 export type UpdateHouseholdPrincipalRequestType = z.infer<
   typeof UpdateHouseholdPrincipalRequestSchema
 >;
+
+export const DeleteHouseholdDataSchema = z
+  .object({
+    householdId: z
+      .string()
+      .trim()
+      .min(5, { message: 'Household id requires minimum of 5 characters' }),
+    estateId: z.string().trim().min(5, { message: 'Estate id requires minimum of 5 characters' }),
+  })
+  .strict();
+
+export type DeleteHouseholdDataType = z.infer<typeof DeleteHouseholdDataSchema>;

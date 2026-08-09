@@ -141,9 +141,7 @@
         "configuration_keys_key_unique": {
           "name": "configuration_keys_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "key"
-          ]
+          "columns": ["key"]
         }
       },
       "policies": {},
@@ -358,12 +356,8 @@
           "name": "estate_managers_estate_id_fkey",
           "tableFrom": "estate_managers",
           "tableTo": "estates",
-          "columnsFrom": [
-            "estate_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["estate_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -371,12 +365,8 @@
           "name": "estate_managers_manager_id_fkey",
           "tableFrom": "estate_managers",
           "tableTo": "managers",
-          "columnsFrom": [
-            "manager_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["manager_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -474,12 +464,8 @@
           "name": "estates_payment_id_fkey",
           "tableFrom": "estates",
           "tableTo": "payments",
-          "columnsFrom": [
-            "payment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["payment_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -487,12 +473,8 @@
           "name": "estates_plan_id_fkey",
           "tableFrom": "estates",
           "tableTo": "subscription_plans",
-          "columnsFrom": [
-            "plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -652,12 +634,8 @@
           "name": "households_estate_id_fkey",
           "tableFrom": "households",
           "tableTo": "estates",
-          "columnsFrom": [
-            "estate_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["estate_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -667,9 +645,7 @@
         "households_code_unique": {
           "name": "households_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -751,16 +727,12 @@
         "managers_email_unique": {
           "name": "managers_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         },
         "managers_email_key": {
           "name": "managers_email_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -948,12 +920,8 @@
           "name": "payments_paid_by_fkey",
           "tableFrom": "payments",
           "tableTo": "managers",
-          "columnsFrom": [
-            "paid_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["paid_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -961,12 +929,8 @@
           "name": "payments_plan_id_fkey",
           "tableFrom": "payments",
           "tableTo": "subscription_plans",
-          "columnsFrom": [
-            "plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -976,9 +940,7 @@
         "payments_gateway_reference_key": {
           "name": "payments_gateway_reference_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "reference"
-          ]
+          "columns": ["reference"]
         }
       },
       "policies": {},
@@ -1179,12 +1141,8 @@
           "name": "persons_estate_id_fkey",
           "tableFrom": "persons",
           "tableTo": "estates",
-          "columnsFrom": [
-            "estate_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["estate_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1349,12 +1307,8 @@
           "name": "residents_estate_id_fkey",
           "tableFrom": "residents",
           "tableTo": "estates",
-          "columnsFrom": [
-            "estate_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["estate_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1362,12 +1316,8 @@
           "name": "residents_household_id_fkey",
           "tableFrom": "residents",
           "tableTo": "households",
-          "columnsFrom": [
-            "household_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["household_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1375,12 +1325,8 @@
           "name": "residents_person_id_fkey",
           "tableFrom": "residents",
           "tableTo": "persons",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1388,12 +1334,8 @@
           "name": "residents_added_by_manager_fkey",
           "tableFrom": "residents",
           "tableTo": "managers",
-          "columnsFrom": [
-            "added_by_manager"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["added_by_manager"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1401,12 +1343,8 @@
           "name": "residents_added_by_person_fkey",
           "tableFrom": "residents",
           "tableTo": "persons",
-          "columnsFrom": [
-            "added_by_person"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["added_by_person"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1416,9 +1354,7 @@
         "residents_code_unique": {
           "name": "residents_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -1430,31 +1366,17 @@
     "public.estate_status": {
       "name": "estate_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "active",
-        "inactive",
-        "expired",
-        "pending_payment"
-      ]
+      "values": ["pending", "active", "inactive", "expired", "pending_payment"]
     },
     "public.genders": {
       "name": "genders",
       "schema": "public",
-      "values": [
-        "male",
-        "female",
-        "unknown"
-      ]
+      "values": ["male", "female", "unknown"]
     },
     "public.roles": {
       "name": "roles",
       "schema": "public",
-      "values": [
-        "principal",
-        "assistant",
-        "member"
-      ]
+      "values": ["principal", "assistant", "member"]
     }
   },
   "schemas": {},

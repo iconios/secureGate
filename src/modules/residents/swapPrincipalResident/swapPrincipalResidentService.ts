@@ -87,7 +87,7 @@ export const swapPrincipalResidentService = async (
 
     // 4. Verify the current principal and selected replacement belong to the household
     const [currentPrincipal] = await db
-      .select({ id: residents.id, })
+      .select({ id: residents.id })
       .from(residents)
       .where(
         and(
@@ -98,15 +98,15 @@ export const swapPrincipalResidentService = async (
       );
 
     const [selectedPrincipal] = await db
-      .select({ 
+      .select({
         id: residents.id,
         fullName: persons.fullName,
         phone: persons.phone,
-        photoUrl: persons.photoUrl, 
+        photoUrl: persons.photoUrl,
         email: persons.email,
         gender: persons.gender,
         dateOfBirth: persons.dateOfBirth,
-        role: residents.role
+        role: residents.role,
       })
       .from(residents)
       .innerJoin(persons, eq(persons.id, residents.personId))
@@ -173,7 +173,7 @@ export const swapPrincipalResidentService = async (
       oldPrincipalId: oldPrincipalId,
       newPrincipal: {
         ...selectedPrincipal,
-        role: "principal",
+        role: 'principal',
       },
     });
   } catch (error: unknown) {

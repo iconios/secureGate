@@ -128,7 +128,7 @@ export const updateHouseholdAndPrincipalDetailsService = async (
 
     // 4. Confirm that the specified resident is a principal resident of the household.
     const [householdPrincipal] = await db
-      .select({personId: persons.id})
+      .select({ personId: persons.id })
       .from(residents)
       .innerJoin(persons, eq(persons.id, residents.personId))
       .where(

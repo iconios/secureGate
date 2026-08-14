@@ -502,7 +502,7 @@ export const CreateHouseholdsService = async (newHouseholdData: CreateHouseholdI
       households: processingSummary.map((item) => item.householdId),
     });
     return successResponseHelper('Households and residents successfully provisioned', {
-      processingSummary,
+      ...processingSummary,
       count: processingSummary.length,
     });
   } catch (error: unknown) {

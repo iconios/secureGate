@@ -15,6 +15,7 @@ import UpdateEstatePaymentDetailsController from './modules/payments/update.esta
 import { dbMaintenanceRouter } from './modules/dbMaintenance/dbMaintenance.routes.js';
 import { HouseholdsRouter } from './modules/houseHolds/households.routes.js';
 import { residentsRouter } from './modules/residents/residents.routes.js';
+import { AppError } from './common/errors/appError.js';
 
 const app = express();
 const PORT = process.env.PORT || 3010;
@@ -91,6 +92,10 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
   if (res.headersSent) {
     return next(err);
+  }
+
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).json(errorResponseHelper(err.message, err.code, err.details));
   }
 
   res

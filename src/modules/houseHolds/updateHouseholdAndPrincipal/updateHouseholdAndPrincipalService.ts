@@ -6,15 +6,15 @@
    of the specified estate.
 3. Confirm that the specified household belongs to the estate.
 4. Confirm that the specified person is a principal resident of the household.
-5. Update the supplied household and/or resident fields within
+5. Confirm that the resulting unit number and street combination is unique within the estate.
+6. Update the supplied household and/or resident fields within
    a single database transaction.
-6. Retrieve and return the updated household and principal details.
+7. Retrieve and return the updated household and principal details.
 */
 
-import { and, eq } from 'drizzle-orm';
+import { and, count, eq, isNull, ne } from 'drizzle-orm';
 import db from '../../../db/index.js';
 import { estateManagers } from '../../../db/schema/estateManagers.js';
-import { errorResponseHelper } from '../../../utils/errorResponseHelper.js';
 import {
   UpdateHouseholdPrincipalRequestSchema,
   UpdateHouseholdPrincipalRequestType,
@@ -23,9 +23,9 @@ import { households } from '../../../db/schema/households.js';
 import { residents } from '../../../db/schema/residents.js';
 import { persons } from '../../../db/schema/persons.js';
 import { successResponseHelper } from '../../../utils/successResponseHelper.js';
-import { ZodError } from 'zod';
 import logger from '../../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
+import { AppError } from '../../../common/errors/appError.js';
 
 export const updateHouseholdAndPrincipalDetailsService = async (
   userId: string,
@@ -39,7 +39,6 @@ export const updateHouseholdAndPrincipalDetailsService = async (
     requestId: randomUUID(),
   });
 
-  try {
     // 1. Accept and validate the update data
     const trimmedUserId = userId.trim();
     const trimmedEstateId = estateId.trim();
@@ -48,36 +47,46 @@ export const updateHouseholdAndPrincipalDetailsService = async (
 
     if (!trimmedUserId) {
       householdLogs.warn('User id is required');
-      return errorResponseHelper('User id is required', 'USER_ID_REQUIRED', 'User id is required');
+
+      throw new AppError(
+        400, 
+        'USER_ID_REQUIRED', 
+        'Missing user id', 
+        'User id is required'
+      );
     }
 
     if (!trimmedEstateId) {
       householdLogs.warn('Estate id is required', {
         estateId: trimmedEstateId,
       });
-      return errorResponseHelper(
-        'Estate id is required',
+
+      throw new AppError(
+        400, 
         'ESTATE_ID_REQUIRED',
+        'Missing estate id', 
         'Estate id is required',
       );
     }
 
     if (!trimmedHouseholdId) {
       householdLogs.warn('Household ID is required');
-
-      return errorResponseHelper(
-        'Household ID is required',
+      
+      throw new AppError(
+        400, 
         'HOUSEHOLD_ID_REQUIRED',
+        'Missing household id', 
         'Household ID is required',
       );
     }
 
     if (!trimmedprincipalResidentId) {
       householdLogs.warn('Principal resident ID is required');
-
-      return errorResponseHelper(
-        'Principal resident ID is required',
+      
+      throw new AppError(
+        400, 
         'PRINCIPAL_RESIDENT_ID_REQUIRED',
+        'Missing principal resident id', 
         'Principal resident ID is required',
       );
     }
@@ -103,25 +112,36 @@ export const updateHouseholdAndPrincipalDetailsService = async (
         userId: trimmedUserId,
         estateId: trimmedEstateId,
       });
-      return errorResponseHelper('Unauthorized', 'USER_UNASSOCIATED_WITH_ESTATE', 'Unauthorized');
+      
+      throw new AppError(
+        401, 
+        'USER_UNASSOCIATED_WITH_ESTATE',
+        'Unauthorized request',
+        'Unauthorized',
+      );
     }
 
     // 3. Confirm that the specified household belongs to the estate.
     const [confirmedEstateHousehold] = await db
       .select({
         id: households.id,
+        unitNumber: households.unitNumber,
+        blockOrStreet: households.blockOrStreet,
       })
       .from(households)
-      .where(and(eq(households.id, trimmedHouseholdId), eq(households.estateId, trimmedEstateId)));
+      .where(and(eq(households.id, trimmedHouseholdId), eq(households.estateId, trimmedEstateId)))
+      .limit(1);
 
     if (!confirmedEstateHousehold) {
       householdLogs.warn('Household not associated with estate', {
         userId: trimmedUserId,
         estateId: trimmedEstateId,
       });
-      return errorResponseHelper(
-        'Household not associated with estate',
+      
+      throw new AppError(
+        409, 
         'HOUSEHOLD_ESTATE_MISMATCH',
+        'Household not associated with estate',
         'Household not associated with estate',
       );
     }
@@ -140,18 +160,72 @@ export const updateHouseholdAndPrincipalDetailsService = async (
       );
 
     if (!householdPrincipal) {
-      householdLogs.warn('Resident not principal of household', {
+      householdLogs.warn('Resident not principal in household', {
         userId: trimmedUserId,
         estateId: trimmedEstateId,
       });
-      return errorResponseHelper(
-        'Resident not principal of household',
+      
+      throw new AppError(
+        409, 
         'PRINCIPAL_HOUSEHOLD_MISMATCH',
-        'Resident not principal of household',
+        'Resident not principal in household',
+        'Resident not principal in household',
       );
     }
 
-    // 5. Update the supplied household and/or resident fields within
+    // 5. Confirm that the resulting unit number and street combination
+    //    is unique within the estate.
+    const isAddressBeingUpdated =
+      household?.unitNumber !== undefined || household?.blockOrStreet !== undefined;
+
+    if (isAddressBeingUpdated) {
+      const candidateUnitNumber = household?.unitNumber ?? confirmedEstateHousehold.unitNumber;
+
+      const candidateBlockOrStreet =
+        household?.blockOrStreet ?? confirmedEstateHousehold.blockOrStreet;
+
+      const unitNumberCondition =
+        candidateUnitNumber === null
+          ? isNull(households.unitNumber)
+          : eq(households.unitNumber, candidateUnitNumber);
+
+      const blockOrStreetCondition =
+        candidateBlockOrStreet === null
+          ? isNull(households.blockOrStreet)
+          : eq(households.blockOrStreet, candidateBlockOrStreet);
+
+      const [duplicateHousehold] = await db
+        .select({
+          id: households.id,
+        })
+        .from(households)
+        .where(
+          and(
+            eq(households.estateId, trimmedEstateId),
+            unitNumberCondition,
+            blockOrStreetCondition,
+            ne(households.id, trimmedHouseholdId),
+          ),
+        )
+        .limit(1);
+
+      if (duplicateHousehold) {
+        householdLogs.warn('Household with the same unit number and street already exists', {
+          estateId: trimmedEstateId,
+          householdId: trimmedHouseholdId,
+          duplicateHouseholdId: duplicateHousehold.id,
+        });
+        
+      throw new AppError(
+        409, 
+        'HOUSEHOLD_DUPLICATE',
+        'Household with the same unit number and street already exists',
+        'Household with the same unit number and street already exists',
+      );
+      }
+    }
+
+    // 6. Update the supplied household and/or resident fields within
     //    a single database transaction.
     const updatedRecord = await db.transaction(async (tx) => {
       if (household) {
@@ -176,59 +250,57 @@ export const updateHouseholdAndPrincipalDetailsService = async (
       }
 
       const [updatedHousehold] = await tx
-        .select()
+        .select({
+          id: households.id,
+          code: households.code,
+          estateId: households.estateId,
+          blockOrStreet: households.blockOrStreet,
+          unitNumber: households.unitNumber
+        })
         .from(households)
         .where(eq(households.id, trimmedHouseholdId))
         .limit(1);
 
       const [updatedPrincipal] = await tx
-        .select()
+        .select({
+        id: persons.id,
+        fullName: persons.fullName,
+        phone: persons.phone,
+        photoUrl: persons.photoUrl,
+        email: persons.email,
+        gender: persons.gender,
+        dateOfBirth: persons.dateOfBirth,
+        estateId: persons.estateId,
+      })
         .from(persons)
         .where(eq(persons.id, householdPrincipal.personId))
         .limit(1);
 
+      const [householdResidentCount] = await tx
+        .select({
+          count: count(),
+        })
+        .from(residents)
+        .where(
+          and(
+            eq(residents.householdId, trimmedHouseholdId),
+            eq(residents.estateId, trimmedEstateId),
+          ),
+        );
+
       return {
         household: updatedHousehold,
         principal: updatedPrincipal,
+        totalResidents: householdResidentCount.count,
       };
     });
 
-    // 6. Retrieve and return the updated household and principal details.
+    // 7. Retrieve and return the updated household and principal details.
     householdLogs.info('Household and principal records updated successfully', {
       userId: trimmedUserId,
       estateId: trimmedEstateId,
     });
     return successResponseHelper('Household and principal records updated successfully', {
-      updatedRecord,
+      ...updatedRecord,
     });
-  } catch (error: unknown) {
-    const errMessage =
-      error instanceof Error
-        ? error.message
-        : 'Error updating household and principal resident data';
-    if (error instanceof ZodError) {
-      householdLogs.error('Error updating household and principal data', {
-        error: error.issues,
-      });
-
-      return errorResponseHelper(
-        'Error updating household and principal resident data',
-        'VALIDATION_ERROR',
-        'Error updating household and principal resident data',
-        error,
-      );
-    }
-
-    householdLogs.error('Unexpected error while updating household and principal resident data', {
-      message: errMessage,
-      error,
-    });
-
-    return errorResponseHelper(
-      'Unexpected error while updating household and principal resident data',
-      'UNEXPECTED_ERROR',
-      'Unexpected error while updating household and principal resident data',
-      error,
-    );
-  }
 };

@@ -8,6 +8,7 @@
     Delete all residents associated with household
     Delete all vehicles associated with household
     Delete household
+    Update the number of households in estate
 5. Send response to user or caller
 */
 
@@ -18,10 +19,11 @@ import logger from '../../../common/winston/logger.js';
 import { randomUUID } from 'crypto';
 import db from '../../../db/index.js';
 import { estateManagers } from '../../../db/schema/estateManagers.js';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { residents } from '../../../db/schema/residents.js';
 import { households } from '../../../db/schema/households.js';
 import { successResponseHelper } from '../../../utils/successResponseHelper.js';
+import { estates } from '../../../db/schema/estates.js';
 
 type LogContext = {
   householdId: string;
@@ -114,6 +116,21 @@ export const deleteHouseholdService = async (
         throw new HouseholdNotFoundError();
       }
 
+      // Update the number of households in estate
+      const updatedEstate = await tx
+        .update(estates)
+        .set({
+          numberOfHouseholds: sql<number>`
+              GREATEST(COALESCE(${estates.numberOfHouseholds}, 0) - 1, 0)
+            `,
+        })
+        .where(eq(estates.id, estateId))
+        .returning({ id: estates.id });
+
+      if (updatedEstate.length !== 1) {
+        throw new Error('Estate household count could not be updated');
+      }
+
       return {
         residentsCount: deletedResidents.length,
         householdCount: deletedHouseholds.length,
@@ -122,11 +139,11 @@ export const deleteHouseholdService = async (
 
     // 5. Send response to user or caller
     householdLogs.info('Household successfully deleted', {
-      deletedRecord,
+      ...deletedRecord,
       ...logContext,
     });
     return successResponseHelper('Household successfully deleted', {
-      deletedRecord,
+      ...deletedRecord,
       ...logContext,
     });
   } catch (error: unknown) {
@@ -148,7 +165,7 @@ export const deleteHouseholdService = async (
     }
 
     if (error instanceof HouseholdNotFoundError) {
-      householdLogs.error('Household not found', {
+      householdLogs.warn('Household not found', {
         ...logContext,
         message: errorMessage,
         error: error,

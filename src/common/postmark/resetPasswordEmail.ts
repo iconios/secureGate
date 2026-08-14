@@ -1,3 +1,4 @@
+import { redactEmailUsername } from '../../utils/redactEmailUsername.js';
 import { transporter } from './mailer.js';
 
 // Html escape function
@@ -57,9 +58,9 @@ const sendPasswordResetEmail = async (
   // Send password reset email
   try {
     await transporter.sendEmail(mailOptions);
-    console.log('Password reset email sent to', email);
+    console.log('Password reset email sent to', redactEmailUsername(email));
   } catch (error) {
-    console.log('Error sending password reset email', error);
+    console.log(`Error sending password reset email to ${redactEmailUsername(email)}`, error);
     throw error;
   }
 };

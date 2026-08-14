@@ -1,4 +1,4 @@
-// Get All Non Principal Residents By Estate
+// Get All Non Principal Residents
 /*
 #Plan:
 1. Accept and validate user id and estate id
@@ -68,11 +68,14 @@ export const getAllNonPrincipalResidentsByEstateService = async (
     const searchPattern = `%${searchTerm}%`;
     const residentsWhere = searchTerm
       ? and(
-          eq(residents.estateId, estateId),
+          // eq(residents.estateId, estateId),
           ne(residents.role, 'principal'),
           or(ilike(persons.fullName, searchPattern), ilike(persons.phone, searchPattern)),
         )
-      : and(eq(residents.estateId, estateId), ne(residents.role, 'principal'));
+      : and(
+          // eq(residents.estateId, estateId),
+          ne(residents.role, 'principal'),
+        );
 
     const nonPrincipals = await db
       .select({

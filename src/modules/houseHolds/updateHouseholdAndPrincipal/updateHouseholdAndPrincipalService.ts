@@ -255,7 +255,11 @@ export const updateHouseholdAndPrincipalDetailsService = async (
           code: households.code,
           estateId: households.estateId,
           blockOrStreet: households.blockOrStreet,
-          unitNumber: households.unitNumber
+          unitNumber: households.unitNumber,
+          mobileAccess: households.mobileAccess,
+          guestPreAuthorize: households.guestPreAuthorize,
+          guestArrivalNotify: households.guestArrivalNotify,
+          emergencyAlerts: households.emergencyAlerts,          
         })
         .from(households)
         .where(eq(households.id, trimmedHouseholdId))

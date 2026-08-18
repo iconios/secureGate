@@ -188,7 +188,7 @@ export const swapPrincipalResidentService = async (
     newPrincipalId: newPrincipalId,
     ...logContext,
   });
-  return successResponseHelper('The swap has been successfully done', {
+  return successResponseHelper('The principal resident has been successfully changed.', {
     household: swappedHousehold.household,
     principal: {
       ...selectedPrincipal,

@@ -6,6 +6,7 @@ import {
   text,
   index,
   uniqueIndex,
+  boolean,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm/relations';
 import { estates } from './estates.js';
@@ -22,6 +23,10 @@ export const households = pgTable(
     estateId: uuid('estate_id').notNull(),
     blockOrStreet: text('block_or_street'),
     unitNumber: text('unit_number').notNull(),
+    mobileAccess: boolean('mobile_access').default(true),
+    guestPreAuthorize: boolean('guest_pre_authorize').default(true),
+    guestArrivalNotify: boolean('guest_arrival_notify').default(true),
+    emergencyAlerts: boolean('emergency_alerts').default(true),
   },
   (table) => [
     foreignKey({

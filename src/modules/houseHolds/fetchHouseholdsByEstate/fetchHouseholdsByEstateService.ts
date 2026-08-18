@@ -23,7 +23,7 @@
    - pagination
 */
 
-import { and, asc, count, countDistinct, eq, ilike, inArray, or } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, inArray, or } from 'drizzle-orm';
 import db from '../../../db/index.js';
 import { estateManagers } from '../../../db/schema/estateManagers.js';
 import { errorResponseHelper } from '../../../utils/errorResponseHelper.js';
@@ -173,6 +173,11 @@ export const fetchHouseholdsByEstateService = async (
         principalResidentEmail: persons.email,
         principalResidentGender: persons.gender,
         principalResidentDateOfBirth: persons.dateOfBirth,
+
+        mobileAccess: households.mobileAccess,
+        guestPreAuthorize: households.guestPreAuthorize,
+        guestArrivalNotify: households.guestArrivalNotify,
+        emergencyAlerts: households.emergencyAlerts,
       })
       .from(households)
       .leftJoin(
@@ -181,7 +186,7 @@ export const fetchHouseholdsByEstateService = async (
       )
       .leftJoin(persons, eq(residents.personId, persons.id))
       .where(householdSearchWhere)
-      .orderBy(asc(households.code), asc(households.id))
+      .orderBy(asc(households.unitNumber), asc(households.id))
       .limit(safePageSize)
       .offset(offset);
 
@@ -267,6 +272,10 @@ export const fetchHouseholdsByEstateService = async (
             dateOfBirth: household.principalResidentDateOfBirth,
           }
         : null,
+      mobileAccess: household.mobileAccess,
+      guestPreAuthorize: household.guestPreAuthorize,
+      guestArrivalNotify: household.guestArrivalNotify,
+      emergencyAlerts: household.emergencyAlerts,
       memberCount: memberCountMap.get(household.id) ?? 0,
       assistantCount: assistantCountMap.get(household.id) ?? 0,
     }));
@@ -310,13 +319,13 @@ export const fetchHouseholdsByEstateService = async (
       );
     }
 
-    householdLogs.error('Unexcepted error while processing households data', {
+    householdLogs.error('Unexpected error while processing households data', {
       message: errMessage,
       error,
     });
 
     return errorResponseHelper(
-      'Unexcepted error while processing households data',
+      'Unexpected error while processing households data',
       'UNEXPECTED_ERROR',
       `${householdLogs.defaultMeta?.requestId}`,
       error,

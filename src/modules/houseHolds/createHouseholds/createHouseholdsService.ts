@@ -390,6 +390,7 @@ export const CreateHouseholdsService = async (newHouseholdData: CreateHouseholdI
           .returning({
             id: households.id,
             unitNumber: households.unitNumber,
+            blockOrStreet: households.blockOrStreet,
           });
 
         // --- B. Resolve Principal Resident Person ID ---
@@ -467,29 +468,43 @@ export const CreateHouseholdsService = async (newHouseholdData: CreateHouseholdI
           });
         }
 
-        // 10. Update the number of households in estate
-        await tx
-          .update(estates)
-          .set({
-            numberOfHouseholds: sql<number>`
-              COALESCE(${estates.numberOfHouseholds}, 0)
-              + ${householdsData.length}
-            `,
+        // 
+        const [principalResident] = await tx
+          .select({
+            fullName: persons.fullName,
+            photoUrl: persons.photoUrl,
           })
-          .where(eq(estates.id, estateId));
+          .from(persons)
+          .where(
+            eq(persons.id, principalPersonId)
+          )
 
         // Add to return bundle
         summaries.push({
           householdId: insertedHousehold.id,
           unitNumber: insertedHousehold.unitNumber,
+          blockOrStreet: insertedHousehold.blockOrStreet ?? "",
           code: householdCode,
           principalResident: {
             personId: principalPersonId,
             code: principalResidentCode,
+            fullName: principalResident.fullName,
+            photoUrl: principalResident.photoUrl ?? "",
           },
           members: secondaryMembersSummary,
         });
-      }
+      };
+
+      // 10. Update the number of households in estate
+      await tx
+        .update(estates)
+        .set({
+          numberOfHouseholds: sql<number>`
+            COALESCE(${estates.numberOfHouseholds}, 0)
+            + ${householdsData.length}
+          `,
+        })
+        .where(eq(estates.id, estateId));
 
       return summaries;
     });
@@ -502,7 +517,7 @@ export const CreateHouseholdsService = async (newHouseholdData: CreateHouseholdI
       households: processingSummary.map((item) => item.householdId),
     });
     return successResponseHelper('Households and residents successfully provisioned', {
-      ...processingSummary,
+      households: processingSummary,
       count: processingSummary.length,
     });
   } catch (error: unknown) {

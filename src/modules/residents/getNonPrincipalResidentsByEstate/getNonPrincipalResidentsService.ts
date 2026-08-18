@@ -79,7 +79,7 @@ export const getAllNonPrincipalResidentsByEstateService = async (
 
     const nonPrincipals = await db
       .select({
-        id: residents.id,
+        id: persons.id,
         fullName: persons.fullName,
         phone: persons.phone,
         email: persons.email,

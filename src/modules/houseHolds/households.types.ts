@@ -58,10 +58,13 @@ export type CreateHouseholdInputType = z.infer<typeof CreateHouseholdInputSchema
 export type CreatedHouseholdSummary = {
   householdId: string;
   unitNumber: string;
+  blockOrStreet: string;
   code: string;
   principalResident: {
     personId: string;
     code?: string;
+    fullName: string;
+    photoUrl: string;
   };
   members: {
     personId: string;
@@ -99,6 +102,10 @@ export const UpdateHouseholdDataSchema = z
   .object({
     unitNumber: z.string().trim().min(1).max(50).optional(),
     blockOrStreet: blockOrStreetSchema.optional(),
+    mobileAccess: z.boolean().optional(),
+    guestPreAuthorize: z.boolean().optional(),
+        guestArrivalNotify: z.boolean().optional(),
+        emergencyAlerts: z.boolean().optional(),
   })
   .strict()
   .refine((data) => Object.values(data).some((value) => value !== undefined), {

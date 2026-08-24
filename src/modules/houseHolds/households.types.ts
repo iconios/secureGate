@@ -18,6 +18,36 @@ const emailSchema = z
 
 const blockOrStreetSchema = z.string().trim().min(2);
 
+const CreatePrincipalSchema = z.object({
+        mode: z.literal('create'),
+        fullName: z.string(),
+        email: emailSchema,
+        phone: termiiPhoneSchema,
+        gender: z.enum(['male', 'female']),
+        photoUrl: z.url().optional(),
+        dateOfBirth: z.string().optional(),
+      });
+
+const LinkedPrincipalSchema = z.object({
+      mode: z.literal('link'),
+      personId: z.string(),
+});
+
+const CreateMemberSchema = z.object({
+        mode: z.literal('create'),
+        fullName: z.string(),
+        email: emailSchema.optional(),
+        phone: termiiPhoneSchema.optional(),
+        gender: z.enum(['male', 'female']),
+        photoUrl: z.url().optional(),
+        dateOfBirth: z.string().optional(),
+      });
+
+const LinkedMemberSchema = z.object({
+      mode: z.literal('link'),
+      personId: z.string(),
+});
+
 export const CreateHouseholdInputSchema = z.object({
   estateId: z.uuid(),
   createdByManagerId: z.uuid(),
@@ -27,27 +57,9 @@ export const CreateHouseholdInputSchema = z.object({
         unitNumber: z.string().trim().min(1).max(50).trim(),
         blockOrStreet: blockOrStreetSchema.optional(),
       }),
-      principalResident: z.object({
-        mode: z.enum(['create', 'link']),
-        personId: z.string().optional(),
-        fullName: z.string().optional(),
-        email: emailSchema.optional(),
-        phone: termiiPhoneSchema.optional(),
-        gender: z.enum(['male', 'female', 'unknown']).default('unknown').optional(),
-        photoUrl: z.url().optional(),
-        dateOfBirth: z.string().optional(),
-      }),
+      principalResident: z.union([CreatePrincipalSchema, LinkedPrincipalSchema]),
       members: z.array(
-        z.object({
-          mode: z.enum(['create', 'link']),
-          personId: z.string().optional(),
-          fullName: z.string().optional(),
-          dateOfBirth: z.iso.date().optional(),
-          email: emailSchema.optional(),
-          phone: termiiPhoneSchema.optional(),
-          photoUrl: z.string().optional(),
-          gender: z.enum(['male', 'female', 'unknown']).default('unknown').optional(),
-        }),
+        z.union([CreateMemberSchema, LinkedMemberSchema])
       ),
     }),
   ),

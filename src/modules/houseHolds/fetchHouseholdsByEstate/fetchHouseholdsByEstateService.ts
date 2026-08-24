@@ -121,7 +121,7 @@ export const fetchHouseholdsByEstateService = async (
     //    - total households
     //    - total members
     //    - total assistants
-    const [totalHouseholdsRows, totalMembersRows, totalAssistantsRows] = await Promise.all([
+    const [totalHouseholdsRows, totalResidentsRow, totalAssistantsRows,] = await Promise.all([
       db
         .select({
           count: count(),
@@ -142,9 +142,19 @@ export const fetchHouseholdsByEstateService = async (
         .from(residents)
         .innerJoin(matchingHouseholds, eq(residents.householdId, matchingHouseholds.id))
         .where(eq(residents.role, 'assistant')),
+
+      db
+        .select({
+          count: count(),
+        })
+        .from(residents)
+        .innerJoin(matchingHouseholds, eq(residents.householdId, matchingHouseholds.id))
+        .where(
+            eq(residents.estateId, estateId),
+        )
     ]);
     const totalHouseholds = Number(totalHouseholdsRows[0]?.count ?? 0);
-    const totalMembers = Number(totalMembersRows[0]?.count ?? 0);
+    const totalResidents = Number(totalResidentsRow[0]?.count ?? 0);
     const totalAssistants = Number(totalAssistantsRows[0]?.count ?? 0);
 
     // Count total household rows for pagination.
@@ -205,7 +215,7 @@ export const fetchHouseholdsByEstateService = async (
         allEstates: allUserEstates,
         summary: {
           householdsTotal: totalHouseholds,
-          membersTotal: totalMembers,
+          residentsTotal: totalResidents,
           assistantsTotal: totalAssistants,
         },
         households: [],
@@ -245,6 +255,17 @@ export const fetchHouseholdsByEstateService = async (
       .where(and(inArray(residents.householdId, householdIds), eq(residents.role, 'assistant')))
       .groupBy(residents.householdId);
 
+    
+    // Fetch residents counts for households on this page.
+    const residentsCountRows = await db
+      .select({
+        householdId: residents.householdId,
+        count: count(),
+      })
+      .from(residents)
+      .where((inArray(residents.householdId, householdIds)))
+      .groupBy(residents.householdId);
+
     // Convert rows into lookup maps.
     const memberCountMap = new Map(
       memberCountRows.map((row) => [row.householdId, Number(row.count)]),
@@ -253,6 +274,10 @@ export const fetchHouseholdsByEstateService = async (
     const assistantCountMap = new Map(
       assistantCountRows.map((row) => [row.householdId, Number(row.count)]),
     );
+
+    const residentsCountMap = new Map(
+      residentsCountRows.map((row) => [row.householdId, Number(row.count)]),
+    )
 
     // Format household rows
     const formattedHouseholds = householdRows.map((household) => ({
@@ -278,6 +303,7 @@ export const fetchHouseholdsByEstateService = async (
       emergencyAlerts: household.emergencyAlerts,
       memberCount: memberCountMap.get(household.id) ?? 0,
       assistantCount: assistantCountMap.get(household.id) ?? 0,
+      residentsTotal: residentsCountMap.get(household.id) ?? 0,
     }));
 
     householdLogs.info('Households data fetched successfully', {
@@ -291,7 +317,7 @@ export const fetchHouseholdsByEstateService = async (
       allEstates: allUserEstates,
       summary: {
         householdsTotal: totalHouseholds,
-        membersTotal: totalMembers,
+        residentsTotal: totalResidents,
         assistantsTotal: totalAssistants,
       },
       households: formattedHouseholds,

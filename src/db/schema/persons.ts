@@ -1,13 +1,4 @@
-import {
-  pgTable,
-  foreignKey,
-  uuid,
-  timestamp,
-  text,
-  pgEnum,
-  date,
-  uniqueIndex,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, timestamp, text, pgEnum, date, uniqueIndex } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm/relations';
 import { estates } from './estates.js';
 import { sql } from 'drizzle-orm';
@@ -27,21 +18,18 @@ export const persons = pgTable(
     dateOfBirth: date('date_of_birth'),
     photoUrl: text('photo_url'),
     phone: text(),
-    estateId: uuid('estate_id').notNull(),
+    estateId: uuid('estate_id')
+      .notNull()
+      .references(() => estates.id),
     email: text(),
   },
   (table) => [
-    foreignKey({
-      columns: [table.estateId],
-      foreignColumns: [estates.id],
-      name: 'persons_estate_id_fkey',
-    }),
     uniqueIndex('persons_estate_email_unique_idx').on(table.estateId, sql`lower(${table.email})`),
     uniqueIndex('persons_estate_phone_unique_idx').on(table.estateId, sql`lower(${table.phone})`),
   ],
 ).enableRLS();
 
-export const personsRelations = relations(persons, ({ one }) => ({
+export const personsRelations = relations(persons, ({ one, many }) => ({
   estate: one(estates, {
     fields: [persons.estateId],
     references: [estates.id],

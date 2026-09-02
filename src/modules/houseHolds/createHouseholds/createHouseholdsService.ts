@@ -468,32 +468,30 @@ export const CreateHouseholdsService = async (newHouseholdData: CreateHouseholdI
           });
         }
 
-        // 
+        //
         const [principalResident] = await tx
           .select({
             fullName: persons.fullName,
             photoUrl: persons.photoUrl,
           })
           .from(persons)
-          .where(
-            eq(persons.id, principalPersonId)
-          )
+          .where(eq(persons.id, principalPersonId));
 
         // Add to return bundle
         summaries.push({
           householdId: insertedHousehold.id,
           unitNumber: insertedHousehold.unitNumber,
-          blockOrStreet: insertedHousehold.blockOrStreet ?? "",
+          blockOrStreet: insertedHousehold.blockOrStreet ?? '',
           code: householdCode,
           principalResident: {
             personId: principalPersonId,
             code: principalResidentCode,
             fullName: principalResident.fullName,
-            photoUrl: principalResident.photoUrl ?? "",
+            photoUrl: principalResident.photoUrl ?? '',
           },
           members: secondaryMembersSummary,
         });
-      };
+      }
 
       // 10. Update the number of households in estate
       await tx

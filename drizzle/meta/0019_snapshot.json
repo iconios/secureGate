@@ -1,9 +1,294 @@
 {
-  "id": "9141a355-368b-4175-8dfe-f1a6da1f0ffd",
-  "prevId": "b535c3ab-d17e-415d-aa83-aff96ec20dff",
+  "id": "a3e03d24-364a-4345-88ab-9ef66f37a795",
+  "prevId": "beee6f66-ed7e-450b-af78-69b772071fb9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.access_methods": {
+      "name": "access_methods",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "method_key": {
+          "name": "method_key",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "access_methods_method_key_uidx": {
+          "name": "access_methods_method_key_uidx",
+          "columns": [
+            {
+              "expression": "method_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.access_schedules": {
+      "name": "access_schedules",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "resident_id": {
+          "name": "resident_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schedule_type": {
+          "name": "schedule_type",
+          "type": "schedule_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'always_active'"
+        },
+        "allow_public_holidays": {
+          "name": "allow_public_holidays",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "access_schedules_resident_id_uidx": {
+          "name": "access_schedules_resident_id_uidx",
+          "columns": [
+            {
+              "expression": "resident_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "access_schedules_resident_id_residents_id_fk": {
+          "name": "access_schedules_resident_id_residents_id_fk",
+          "tableFrom": "access_schedules",
+          "tableTo": "residents",
+          "columnsFrom": ["resident_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.access_time_slots": {
+      "name": "access_time_slots",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "access_schedule_id": {
+          "name": "access_schedule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "day_of_week": {
+          "name": "day_of_week",
+          "type": "day_of_week",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_time": {
+          "name": "start_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_time": {
+          "name": "end_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "access_time_slots_unique_slot_uidx": {
+          "name": "access_time_slots_unique_slot_uidx",
+          "columns": [
+            {
+              "expression": "access_schedule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "day_of_week",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "start_time",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "end_time",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "access_time_slots_schedule_day_idx": {
+          "name": "access_time_slots_schedule_day_idx",
+          "columns": [
+            {
+              "expression": "access_schedule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "day_of_week",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "access_time_slots_access_schedule_id_access_schedules_id_fk": {
+          "name": "access_time_slots_access_schedule_id_access_schedules_id_fk",
+          "tableFrom": "access_time_slots",
+          "tableTo": "access_schedules",
+          "columnsFrom": ["access_schedule_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "access_time_slots_time_order_check": {
+          "name": "access_time_slots_time_order_check",
+          "value": "\"access_time_slots\".\"end_time\" > \"access_time_slots\".\"start_time\""
+        }
+      },
+      "isRLSEnabled": true
+    },
     "public.activity_logs": {
       "name": "activity_logs",
       "schema": "",
@@ -1051,6 +1336,186 @@
       "checkConstraints": {},
       "isRLSEnabled": true
     },
+    "public.user_access_methods": {
+      "name": "user_access_methods",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "access_method_id": {
+          "name": "access_method_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "manager_id": {
+          "name": "manager_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "user_access_methods_resident_method_uidx": {
+          "name": "user_access_methods_resident_method_uidx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "access_method_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "user_access_methods_manager_method_uidx": {
+          "name": "user_access_methods_manager_method_uidx",
+          "columns": [
+            {
+              "expression": "manager_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "access_method_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "user_access_methods_access_method_id_idx": {
+          "name": "user_access_methods_access_method_id_idx",
+          "columns": [
+            {
+              "expression": "access_method_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "user_access_methods_resident_access_method_uidx": {
+          "name": "user_access_methods_resident_access_method_uidx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "access_method_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "user_access_methods_manager_access_method_uidx": {
+          "name": "user_access_methods_manager_access_method_uidx",
+          "columns": [
+            {
+              "expression": "manager_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "access_method_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "user_access_methods_access_method_id_access_methods_id_fk": {
+          "name": "user_access_methods_access_method_id_access_methods_id_fk",
+          "tableFrom": "user_access_methods",
+          "tableTo": "access_methods",
+          "columnsFrom": ["access_method_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "user_access_methods_user_id_residents_id_fk": {
+          "name": "user_access_methods_user_id_residents_id_fk",
+          "tableFrom": "user_access_methods",
+          "tableTo": "residents",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "user_access_methods_manager_id_managers_id_fk": {
+          "name": "user_access_methods_manager_id_managers_id_fk",
+          "tableFrom": "user_access_methods",
+          "tableTo": "managers",
+          "columnsFrom": ["manager_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
     "public.persons": {
       "name": "persons",
       "schema": "",
@@ -1165,8 +1630,8 @@
         }
       },
       "foreignKeys": {
-        "persons_estate_id_fkey": {
-          "name": "persons_estate_id_fkey",
+        "persons_estate_id_estates_id_fk": {
+          "name": "persons_estate_id_estates_id_fk",
           "tableFrom": "persons",
           "tableTo": "estates",
           "columnsFrom": ["estate_id"],
@@ -1254,6 +1719,34 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "gate_entry": {
+          "name": "gate_entry",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "guest_pre_authorize": {
+          "name": "guest_pre_authorize",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "vehicle_registration": {
+          "name": "vehicle_registration",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "emergency_alert": {
+          "name": "emergency_alert",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
         }
       },
       "indexes": {
@@ -1331,35 +1824,35 @@
         }
       },
       "foreignKeys": {
-        "residents_estate_id_fkey": {
-          "name": "residents_estate_id_fkey",
-          "tableFrom": "residents",
-          "tableTo": "estates",
-          "columnsFrom": ["estate_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "residents_household_id_fkey": {
-          "name": "residents_household_id_fkey",
+        "residents_household_id_households_id_fk": {
+          "name": "residents_household_id_households_id_fk",
           "tableFrom": "residents",
           "tableTo": "households",
           "columnsFrom": ["household_id"],
           "columnsTo": ["id"],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "residents_person_id_fkey": {
-          "name": "residents_person_id_fkey",
+        "residents_estate_id_estates_id_fk": {
+          "name": "residents_estate_id_estates_id_fk",
+          "tableFrom": "residents",
+          "tableTo": "estates",
+          "columnsFrom": ["estate_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "residents_person_id_persons_id_fk": {
+          "name": "residents_person_id_persons_id_fk",
           "tableFrom": "residents",
           "tableTo": "persons",
           "columnsFrom": ["person_id"],
           "columnsTo": ["id"],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "residents_added_by_manager_fkey": {
-          "name": "residents_added_by_manager_fkey",
+        "residents_added_by_manager_managers_id_fk": {
+          "name": "residents_added_by_manager_managers_id_fk",
           "tableFrom": "residents",
           "tableTo": "managers",
           "columnsFrom": ["added_by_manager"],
@@ -1367,8 +1860,8 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "residents_added_by_person_fkey": {
-          "name": "residents_added_by_person_fkey",
+        "residents_added_by_person_persons_id_fk": {
+          "name": "residents_added_by_person_persons_id_fk",
           "tableFrom": "residents",
           "tableTo": "persons",
           "columnsFrom": ["added_by_person"],
@@ -1391,6 +1884,16 @@
     }
   },
   "enums": {
+    "public.day_of_week": {
+      "name": "day_of_week",
+      "schema": "public",
+      "values": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    },
+    "public.schedule_type": {
+      "name": "schedule_type",
+      "schema": "public",
+      "values": ["always_active", "custom_hours"]
+    },
     "public.estate_status": {
       "name": "estate_status",
       "schema": "public",

@@ -33,3 +33,15 @@ export const GetNonPrincipalsByHouseholdSchema = z.object({
 });
 
 export type GetNonPrincipalsByHouseholdType = z.infer<typeof GetNonPrincipalsByHouseholdSchema>;
+
+export const getResidentsByEstateSchema = z
+  .object({
+    userId: z.string().min(1),
+    estateId: z.string().min(1),
+    page: z.coerce.number().int().positive().optional().default(1),
+    pageSize: z.coerce.number().int().positive().max(25).optional().default(10),
+    searchTerm: z.string().trim().optional().default(''),
+  })
+  .strict();
+
+export type getResidentsByEstateType = z.input<typeof getResidentsByEstateSchema>;

@@ -1,9 +1,87 @@
 {
-  "id": "9141a355-368b-4175-8dfe-f1a6da1f0ffd",
-  "prevId": "b535c3ab-d17e-415d-aa83-aff96ec20dff",
+  "id": "e4994651-c5e1-4e78-a99b-12527df8f35b",
+  "prevId": "9141a355-368b-4175-8dfe-f1a6da1f0ffd",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.access_methods": {
+      "name": "access_methods",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "mobile_app": {
+          "name": "mobile_app",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "rfid_key_card": {
+          "name": "rfid_key_card",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "biometric": {
+          "name": "biometric",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "vehicle_tag": {
+          "name": "vehicle_tag",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "numeric_access_code": {
+          "name": "numeric_access_code",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        }
+      },
+      "indexes": {
+        "access_methods_id_idx": {
+          "name": "access_methods_id_idx",
+          "columns": [
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
     "public.activity_logs": {
       "name": "activity_logs",
       "schema": "",
@@ -1254,6 +1332,34 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "gate_entry": {
+          "name": "gate_entry",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "guest_pre_authorize": {
+          "name": "guest_pre_authorize",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "vehicle_registration": {
+          "name": "vehicle_registration",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "emergency_alert": {
+          "name": "emergency_alert",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
         }
       },
       "indexes": {
@@ -1385,6 +1491,102 @@
           "columns": ["code"]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.user_access_methods": {
+      "name": "user_access_methods",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "manager_id": {
+          "name": "manager_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "user_access_methods_resident_id_idx": {
+          "name": "user_access_methods_resident_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "user_access_methods_manager_id_idx": {
+          "name": "user_access_methods_manager_id_idx",
+          "columns": [
+            {
+              "expression": "manager_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "user_access_methods_resident_id_fkey": {
+          "name": "user_access_methods_resident_id_fkey",
+          "tableFrom": "user_access_methods",
+          "tableTo": "residents",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "user_access_methods_manager_id_fkey": {
+          "name": "user_access_methods_manager_id_fkey",
+          "tableFrom": "user_access_methods",
+          "tableTo": "managers",
+          "columnsFrom": ["manager_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": true

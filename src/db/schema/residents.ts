@@ -1,9 +1,10 @@
-import { pgTable, foreignKey, uuid, timestamp, text, pgEnum, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, timestamp, text, pgEnum, index, boolean } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm/relations';
 import { households } from './households.js';
 import { persons } from './persons.js';
 import { managers } from './managers.js';
 import { estates } from './estates.js';
+import { userAccessMethods } from './userAccessMethods.js';
 
 export const roleEnum = pgEnum('roles', ['principal', 'assistant', 'member']);
 
@@ -15,41 +16,26 @@ export const residents = pgTable(
       .defaultNow()
       .notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }),
-    householdId: uuid('household_id').notNull(),
-    estateId: uuid('estate_id').notNull(),
-    personId: uuid('person_id').notNull(),
+    householdId: uuid('household_id')
+      .notNull()
+      .references(() => households.id, { onDelete: 'cascade' }),
+    estateId: uuid('estate_id')
+      .notNull()
+      .references(() => estates.id, { onDelete: 'cascade' }),
+    personId: uuid('person_id')
+      .notNull()
+      .references(() => persons.id, { onDelete: 'cascade' }),
     role: roleEnum().default('member').notNull(),
     delistedAt: timestamp('delisted_at', { withTimezone: true, mode: 'string' }),
-    addedByManager: uuid('added_by_manager'),
-    addedByPerson: uuid('added_by_person'),
+    addedByManager: uuid('added_by_manager').references(() => managers.id),
+    addedByPerson: uuid('added_by_person').references(() => persons.id),
     code: text().notNull().unique(),
+    gateEntry: boolean('gate_entry').default(true).notNull(),
+    guestPreAuthorize: boolean('guest_pre_authorize').default(true).notNull(),
+    vehicleRegistration: boolean('vehicle_registration').default(true).notNull(),
+    emergencyAlert: boolean('emergency_alert').default(true).notNull(),
   },
   (table) => [
-    foreignKey({
-      columns: [table.estateId],
-      foreignColumns: [estates.id],
-      name: 'residents_estate_id_fkey',
-    }),
-    foreignKey({
-      columns: [table.householdId],
-      foreignColumns: [households.id],
-      name: 'residents_household_id_fkey',
-    }),
-    foreignKey({
-      columns: [table.personId],
-      foreignColumns: [persons.id],
-      name: 'residents_person_id_fkey',
-    }),
-    foreignKey({
-      columns: [table.addedByManager],
-      foreignColumns: [managers.id],
-      name: 'residents_added_by_manager_fkey',
-    }),
-    foreignKey({
-      columns: [table.addedByPerson],
-      foreignColumns: [persons.id],
-      name: 'residents_added_by_person_fkey',
-    }),
     index('residents_household_id_idx').on(table.householdId),
     index('residents_person_id_idx').on(table.personId),
     index('residents_estate_id_idx').on(table.estateId),
@@ -61,7 +47,7 @@ export const residents = pgTable(
   ],
 ).enableRLS();
 
-export const residentsRelations = relations(residents, ({ one }) => ({
+export const residentsRelations = relations(residents, ({ one, many }) => ({
   estate: one(estates, {
     fields: [residents.estateId],
     references: [estates.id],
@@ -84,4 +70,5 @@ export const residentsRelations = relations(residents, ({ one }) => ({
     references: [persons.id],
     relationName: 'resident_added_by_person',
   }),
+  userAccessMethods: many(userAccessMethods),
 }));

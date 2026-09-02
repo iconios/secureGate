@@ -1,6 +1,7 @@
 import { pgTable, uuid, timestamp, unique, text, boolean } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm/relations';
 import { estateManagers } from './estateManagers.js';
+import { userAccessMethods } from './userAccessMethods.js';
 
 export const managers = pgTable(
   'managers',
@@ -23,4 +24,5 @@ export const managers = pgTable(
 
 export const managersRelations = relations(managers, ({ many }) => ({
   estateManagers: many(estateManagers),
+  userAccessMethods: many(userAccessMethods),
 }));

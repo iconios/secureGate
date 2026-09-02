@@ -19,33 +19,33 @@ const emailSchema = z
 const blockOrStreetSchema = z.string().trim().min(2);
 
 const CreatePrincipalSchema = z.object({
-        mode: z.literal('create'),
-        fullName: z.string(),
-        email: emailSchema,
-        phone: termiiPhoneSchema,
-        gender: z.enum(['male', 'female']),
-        photoUrl: z.url().optional(),
-        dateOfBirth: z.string().optional(),
-      });
+  mode: z.literal('create'),
+  fullName: z.string(),
+  email: emailSchema,
+  phone: termiiPhoneSchema,
+  gender: z.enum(['male', 'female']),
+  photoUrl: z.url().optional().nullable(),
+  dateOfBirth: z.string().optional().nullable(),
+});
 
 const LinkedPrincipalSchema = z.object({
-      mode: z.literal('link'),
-      personId: z.string(),
+  mode: z.literal('link'),
+  personId: z.string(),
 });
 
 const CreateMemberSchema = z.object({
-        mode: z.literal('create'),
-        fullName: z.string(),
-        email: emailSchema.optional(),
-        phone: termiiPhoneSchema.optional(),
-        gender: z.enum(['male', 'female']),
-        photoUrl: z.url().optional(),
-        dateOfBirth: z.string().optional(),
-      });
+  mode: z.literal('create'),
+  fullName: z.string(),
+  email: emailSchema.optional(),
+  phone: termiiPhoneSchema.optional(),
+  gender: z.enum(['male', 'female']),
+  photoUrl: z.url().optional(),
+  dateOfBirth: z.string().optional(),
+});
 
 const LinkedMemberSchema = z.object({
-      mode: z.literal('link'),
-      personId: z.string(),
+  mode: z.literal('link'),
+  personId: z.string(),
 });
 
 export const CreateHouseholdInputSchema = z.object({
@@ -54,13 +54,11 @@ export const CreateHouseholdInputSchema = z.object({
   households: z.array(
     z.object({
       house: z.object({
-        unitNumber: z.string().trim().min(1).max(50).trim(),
+        unitNumber: z.string().trim().min(1).max(50),
         blockOrStreet: blockOrStreetSchema.optional(),
       }),
       principalResident: z.union([CreatePrincipalSchema, LinkedPrincipalSchema]),
-      members: z.array(
-        z.union([CreateMemberSchema, LinkedMemberSchema])
-      ),
+      members: z.array(z.union([CreateMemberSchema, LinkedMemberSchema])),
     }),
   ),
 });
@@ -116,8 +114,8 @@ export const UpdateHouseholdDataSchema = z
     blockOrStreet: blockOrStreetSchema.optional(),
     mobileAccess: z.boolean().optional(),
     guestPreAuthorize: z.boolean().optional(),
-        guestArrivalNotify: z.boolean().optional(),
-        emergencyAlerts: z.boolean().optional(),
+    guestArrivalNotify: z.boolean().optional(),
+    emergencyAlerts: z.boolean().optional(),
   })
   .strict()
   .refine((data) => Object.values(data).some((value) => value !== undefined), {

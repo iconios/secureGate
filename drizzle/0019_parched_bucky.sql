@@ -1,0 +1,2 @@
+ALTER TABLE "access_time_slots" DROP CONSTRAINT "access_time_slots_time_order_check";--> statement-breakpoint
+ALTER TABLE "access_time_slots" ADD CONSTRAINT "access_time_slots_time_order_check" CHECK ("access_time_slots"."end_time" > "access_time_slots"."start_time");

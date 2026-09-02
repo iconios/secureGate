@@ -4,6 +4,7 @@ import extractToken from '../../middleware/extractToken.js';
 import authenticateToken from '../../middleware/authenticateToken.js';
 import { getAllNonPrincipalResidentsByHouseholdController } from './getNonPrincipalsByHousehold/getNonPrincipalsController.js';
 import { swapPrincipalResidentController } from './swapPrincipalResident/swapPrincipalResidentController.js';
+import { getResidentsByEstateController } from './getResidentsByEstate/getResidentsByEstateController.js';
 
 export const residentsRouter = Router();
 
@@ -17,3 +18,4 @@ residentsRouter.patch(
   '/swap/principals/estate/:estateId/household/:householdId',
   swapPrincipalResidentController,
 );
+residentsRouter.get('/overviewData/estate/:estateId', getResidentsByEstateController);

@@ -12,7 +12,8 @@
     "db:pull": "drizzle-kit pull",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/db/migrate.ts"
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:seed": "tsx src/db/seed.ts"
   },
   "keywords": [],
   "author": "NerdyWebConsults",
